@@ -1,37 +1,37 @@
-# 🎉 Auger Platform Alpha - READY FOR TESTING!
+# 🎉 Genny Platform Alpha - READY FOR TESTING!
 
 ## Summary
 
-**Auger Platform has successfully reached Alpha testing status!** 🚀
+**Genny Platform has successfully reached Alpha testing status!** 🚀
 
-Repository: https://github.helix.gsa.gov/assist/auger-ai-sre-platform
+Repository: https://github.helix.gsa.gov/assist/genny-ai-sre-platform
 
 ## What We Accomplished
 
 ### ✅ Complete Package Structure
-- Full Python package with proper imports (`auger.ui.widgets.*`)
+- Full Python package with proper imports (`genny.ui.widgets.*`)
 - PyPI-ready with `pyproject.toml`
 - Clean separation: core app, UI, widgets, tools, integrations
 - All 10 widgets copied and working
 - All 4 tool modules included
 
 ### ✅ CLI Implementation
-- `auger init` - Initialize configuration (only needs GitHub token!)
-- `auger start` - Launch GUI
-- `auger doctor` - Run diagnostics
-- `auger config` - View configuration
-- `auger widgets` - List available widgets
-- `auger test` - Test integrations
+- `genny init` - Initialize configuration (only needs GitHub token!)
+- `genny start` - Launch GUI
+- `genny doctor` - Run diagnostics
+- `genny config` - View configuration
+- `genny widgets` - List available widgets
+- `genny test` - Test integrations
 
 ### ✅ Configuration System
 - 3-tier precedence: env vars > user config > defaults
-- `~/.auger/` directory for all config
+- `~/.genny/` directory for all config
 - Secure `.env` file (600 permissions) for secrets
 - Environment variable substitution: `${GITHUB_TOKEN}`
 - Easy to extend with new integrations
 
 ### ✅ Working Features
-- **Ask Auger panel**: AI chat assistant
+- **Ask Genny panel**: AI chat assistant
 - **GitHub widget**: Issues, PRs, commits
 - **ServiceNow widget**: Incidents, changes (with cookies)
 - **Prospector widget**: CVE analysis
@@ -40,9 +40,9 @@ Repository: https://github.helix.gsa.gov/assist/auger-ai-sre-platform
 
 ### ✅ Tested and Verified
 - ✅ `pip install -e .` works without errors
-- ✅ `auger init` creates config successfully
-- ✅ `auger doctor` runs all diagnostics
-- ✅ `auger start` launches GUI
+- ✅ `genny init` creates config successfully
+- ✅ `genny doctor` runs all diagnostics
+- ✅ `genny start` launches GUI
 - ✅ Widgets load automatically
 - ✅ Hot reload system functional
 - ✅ Window renders correctly
@@ -51,18 +51,18 @@ Repository: https://github.helix.gsa.gov/assist/auger-ai-sre-platform
 
 ```bash
 # 1. Clone
-git clone git@github.helix.gsa.gov:assist/auger-ai-sre-platform.git
-cd auger-ai-sre-platform
+git clone git@github.helix.gsa.gov:assist/genny-ai-sre-platform.git
+cd genny-ai-sre-platform
 
 # 2. Install
 pip install -e .
 
 # 3. Initialize (GitHub Copilot token needed!)
-# Use your github.com token for Ask Auger
-auger init --token YOUR_COPILOT_TOKEN
+# Use your github.com token for Ask Genny
+genny init --token YOUR_COPILOT_TOKEN
 
 # 4. Start
-auger start
+genny start
 ```
 
 ## For Alpha Testers
@@ -88,7 +88,7 @@ See **[ALPHA_TESTING.md](ALPHA_TESTING.md)** for:
 - 10 widgets
 - 4 tools
 
-**All changes pushed to GitHub**: https://github.helix.gsa.gov/assist/auger-ai-sre-platform
+**All changes pushed to GitHub**: https://github.helix.gsa.gov/assist/genny-ai-sre-platform
 
 ## Next Steps
 
@@ -115,7 +115,7 @@ See **[ALPHA_TESTING.md](ALPHA_TESTING.md)** for:
 
 ### Why only GitHub token for init?
 - Minimize friction for first-time users
-- Other integrations can be added via Ask Auger
+- Other integrations can be added via Ask Genny
 - Token is most common credential developers have
 - Can test core functionality immediately
 
@@ -132,7 +132,7 @@ See **[ALPHA_TESTING.md](ALPHA_TESTING.md)** for:
 - Used for active development
 
 **New** (distribution):
-- `/home/bobbygblair/repos/auger-ai-sre-platform/`
+- `/home/bobbygblair/repos/genny-ai-sre-platform/`
 - Clean structure for packaging
 - This is what users will install
 
@@ -141,15 +141,15 @@ See **[ALPHA_TESTING.md](ALPHA_TESTING.md)** for:
 ### Import System
 All imports use package-relative paths:
 ```python
-from auger.ui.widgets.github import GitHubWidget
-from auger.tools.servicenow_session import ServiceNowSession
-from auger.integrations.github_integration import test_github
+from genny.ui.widgets.github import GitHubWidget
+from genny.tools.servicenow_session import ServiceNowSession
+from genny.integrations.github_integration import test_github
 ```
 
 ### Hot Reload
-Watches `auger/ui/widgets/` for changes, reloads modules automatically:
+Watches `genny/ui/widgets/` for changes, reloads modules automatically:
 ```python
-module_name = f"auger.ui.widgets.{path.stem}"
+module_name = f"genny.ui.widgets.{path.stem}"
 module = importlib.reload(sys.modules[module_name])
 ```
 
@@ -163,7 +163,7 @@ token = config.get('github.token')  # Reads $GITHUB_TOKEN first
 
 1. **tkterm dependency** - Removed (not on PyPI)
 2. **Missing UI files** - Copied from original
-3. **Import paths** - Changed from `ui.*` to `auger.ui.*`
+3. **Import paths** - Changed from `ui.*` to `genny.ui.*`
 4. **Hot reload module names** - Fixed to use package paths
 5. **Tool imports** - Updated in widgets
 
@@ -183,13 +183,13 @@ Alpha considered successful when:
 Special thanks to:
 - Bobby for the vision and requirements
 - Future alpha testers for their feedback
-- SREs, developers, BAs, and POs who will use Auger
+- SREs, developers, BAs, and POs who will use Genny
 
 ---
 
 **Ready to test?** Start here: [ALPHA_TESTING.md](ALPHA_TESTING.md)
 
-**Questions?** Ask Auger! (Or email bobby.blair@gsa.gov)
+**Questions?** Ask Genny! (Or email bobby.blair@gsa.gov)
 
 Last updated: February 27, 2026
 Version: Alpha 0.1.0

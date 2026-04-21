@@ -68,3 +68,9 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 node_modules
+
+# Secrets and conversation history
+*.env
+~/.auger/
+~/.genny/
+docs/origin/conversations*.jsonl

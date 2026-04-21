@@ -1,4 +1,4 @@
-# Auger Platform - Docker Container
+# Genny Platform - Docker Container
 # Full development and runtime environment with all dependencies
 
 FROM ubuntu:22.04
@@ -136,32 +136,32 @@ RUN useradd -m -s /bin/bash auger && \
     chown -R auger:auger /home/auger
 
 # Pre-install Panner widget npm dependencies (runs as root; chown after)
-COPY --chown=auger:auger auger/ui/widgets/package.json /home/auger/auger-platform/auger/ui/widgets/package.json
-RUN cd /home/auger/auger-platform/auger/ui/widgets && \
+COPY --chown=auger:auger auger/ui/widgets/package.json /home/auger/genny-platform/auger/ui/widgets/package.json
+RUN cd /home/auger/genny-platform/auger/ui/widgets && \
     npm install --strict-ssl=false && \
-    chown -R auger:auger /home/auger/auger-platform/
+    chown -R auger:auger /home/auger/genny-platform/
 
 # Copy full application code
 WORKDIR /home/auger
-COPY --chown=auger:auger . /home/auger/auger-platform
-WORKDIR /home/auger/auger-platform
+COPY --chown=auger:auger . /home/auger/genny-platform
+WORKDIR /home/auger/genny-platform
 
 # System-wide pip install — must run BEFORE mv/symlink (auger/ dir must exist).
 # Packages land in /usr/local/lib/ (shared by all users, no per-user copy needed).
-RUN pip install -e /home/auger/auger-platform/
+RUN pip install -e /home/auger/genny-platform/
 
 # ── Live-code symlink ──────────────────────────────────────────────────────
 # Rename the baked auger/ dir and create a symlink that defaults to auger_baked.
-# In prod (auger-launch.sh) the symlink works immediately — no runtime fix needed.
+# In prod (genny-launch.sh) the symlink works immediately — no runtime fix needed.
 # In dev (docker-run.sh) entrypoint.sh repoints it to ~/repos/...auger for hot-reload.
 RUN mv auger auger_baked && \
-    ln -sfn /home/auger/auger-platform/auger_baked auger
+    ln -sfn /home/auger/genny-platform/auger_baked auger
 
 # Make app dir world-readable/executable so any container user (host uid) can access it.
 # Also world-writable on the top-level dir so entrypoint.sh (running as host user)
 # can replace the dangling auger→repos symlink with auger→auger_baked fallback.
-RUN chmod -R o+rX /home/auger/auger-platform/ && \
-    chmod o+rwX /home/auger/auger-platform/ && \
+RUN chmod -R o+rX /home/auger/genny-platform/ && \
+    chmod o+rwX /home/auger/genny-platform/ && \
     chmod o+rX /home/auger/
 
 # auger CLI is now at /usr/local/bin/auger — on PATH for all users.

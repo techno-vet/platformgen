@@ -1,0 +1,276 @@
+# Genny Widget AI Manifests
+# Static tier — describes every widget's purpose, dependencies, and rules.
+# Genny reads this at session start to know what every widget can do.
+# Learned tier lives in ~/.genny/widget_knowledge/{widget_name}.yaml
+
+widgets:
+
+  api_config:
+    title: "API Keys+"
+    purpose: "Manages API keys, tokens, and credentials for all external service integrations. Freshman year — nearly every other widget depends on this."
+    depends_on: []
+    used_by: [jira, gchat, github, artifactory, story_to_prod, flux_config, panner, k8s_explorer]
+    key_data_files:
+      - "~/.genny/.env  (primary credential store — never committed to git)"
+    auger_rules:
+      - "All service credentials live in ~/.genny/.env — never hardcode tokens"
+      - "JIRA_API_TOKEN / JIRA_USERNAME for Jira REST; JSESSIONID for MFA session auth"
+      - "GHE_TOKEN for all GitHub Enterprise API calls (https://github.helix.gsa.gov)"
+      - "Load credentials via python-dotenv before any API call"
+    session_resume_hint: "Check ~/.genny/.env for all service tokens before making API calls"
+
+  gchat:
+    title: "Google Chat"
+    purpose: "Posts messages and @mentions to Google Chat spaces via webhooks. Two scopes: SYSTEM (shared, git-committed) and PERSONAL (user ~/.genny/.env)."
+    depends_on: [api_config]
+    used_by: [story_to_prod, tasks, panner]
+    key_data_files:
+      - "genny/data/gchat_webhooks.yaml  (SYSTEM webhook registry — PR_REVIEWS, AUGER_POC, SRE, etc.)"
+      - "genny/data/gchat_users.yaml  (team member GChat user IDs for @mentions)"
+    auger_rules:
+      - "ALWAYS read webhook URL from gchat_webhooks.yaml — never hardcode"
+      - "ALWAYS use <users/{numeric_id}> syntax for @mentions — plain text names do NOT ping"
+      - "Default channel is AUGER_POC unless user specifies otherwise (AUGER channel is paused)"
+      - "Prod PR notifications go to SRE channel only — not PR_REVIEWS"
+      - "Staging PR notifications go to PR_REVIEWS channel"
+    session_resume_hint: "Read gchat_webhooks.yaml for current channels before posting"
+
+  jira:
+    title: "Jira"
+    purpose: "Fetches, displays, and comments on Jira stories. Authenticated via MFA session (JSESSIONID cookie). Used to load story context into Story→Prod pipeline."
+    depends_on: [api_config]
+    used_by: [story_to_prod]
+    key_data_files:
+      - "~/.genny/.env  (JSESSIONID, JIRA_BASE_URL=https://gsa-standard.atlassian-us-gov-mod.net)"
+    auger_rules:
+      - "JIRA_BASE_URL is https://gsa-standard.atlassian-us-gov-mod.net — not cloud Jira"
+      - "MFA auth uses JSESSIONID cookie — expires ~24h; re-auth via Jira Widget if expired"
+      - "After Jira upgrade: verify MFA auth still works (task #102)"
+    session_resume_hint: "Verify JSESSIONID not expired before fetching story data"
+
+  story_to_prod:
+    title: "Story → Prod"
+    purpose: "Full pipeline visibility: Jira Story → Branch → Local Env → Dev Deploy → PR → Jenkins → Image → Staging → PROD. Two collaboration loops: Loop A (Local↔Dev) and Loop B (Dev iterate)."
+    depends_on: [api_config, jira, github, flux_config]
+    used_by: []
+    key_data_files:
+      - "~/.genny/logs/deployments.db  (deployment records)"
+      - "~/.genny/flux_cache/  (local clone of both flux repos)"
+    auger_rules:
+      - "data-utils uses configJH inline config in flux HelmRelease — NOT jupyterhub_config.py in the image"
+      - "Local Env stage is skippable for flux/config-only changes (e.g. ASSIST3-31091)"
+      - "ASSIST3-31091: staging PR #9079 (assist-flux-config), prod PR #1077 (assist-prod-flux-config)"
+      - "Merge order: staging first → validate → then prod (prod needs 2 approvals)"
+      - "Validation: curl -I https://data-utils.staging.assist.mcaas.fcs.gsa.gov/hub/login | grep set-cookie"
+    session_resume_hint: "ASSIST3-31091 PRs open: staging #9079, prod #1077. Awaiting staging merge + validation before prod."
+
+  flux_config:
+    title: "Flux Config"
+    purpose: "Reads and diffs Helm release YAML files in assist-flux-config and assist-prod-flux-config. Shows image tags per environment. Creates Flux PRs to promote image tags."
+    depends_on: [api_config, github]
+    used_by: [story_to_prod]
+    key_data_files:
+      - "~/repos/assist-flux-config/  (staging + dev envs)"
+      - "~/repos/assist-prod-flux-config/  (production — 2 approvals required)"
+      - "~/repos/assist-prod-flux-config/core/production/data-utils/utils/data-utils.yaml  (data-utils prod)"
+    auger_rules:
+      - "ALL flux PRs (both repos, all envs) must target deploy-automation branch — NEVER main"
+      - "assist-prod-flux-config ALWAYS requires 2 approvals — never push directly"
+      - "data-utils configJH is the LIVE jupyterhub config (not the docker image)"
+      - "Both assist-flux-config and assist-prod-flux-config default branch is deploy-automation"
+    session_resume_hint: "Both flux repos default to deploy-automation — always use as PR base"
+
+  github:
+    title: "GitHub"
+    purpose: "Browses GHE repos, branches, PRs, and commit history. Push operations use HTTPS with GHE_TOKEN."
+    depends_on: [api_config]
+    used_by: [story_to_prod, flux_config]
+    key_data_files:
+      - "~/.genny/.env  (GHE_TOKEN, GHE_URL=https://github.helix.gsa.gov)"
+    auger_rules:
+      - "All git operations use HTTPS with GHE_TOKEN — never SSH from container"
+      - "GHE org is 'assist' — repos at https://github.helix.gsa.gov/assist/{repo}.git"
+
+  tasks:
+    title: "Tasks"
+    purpose: "Local SQLite task tracker. Persists across sessions and glitches. Best place to store investigation findings for glitch recovery."
+    depends_on: []
+    used_by: []
+    key_data_files:
+      - "~/.genny/tasks.db  (table: tasks — id,title,description,status,priority,category)"
+    auger_rules:
+      - "Enrich task descriptions with investigation findings — they survive session glitches"
+      - "Task descriptions are the best persistent knowledge store for complex multi-session work"
+    session_resume_hint: "Read tasks DB for active work context on session start"
+
+  host_tools:
+    title: "Host Tools"
+    purpose: "Launches host-side applications (VS Code, IntelliJ, Chrome, Terminal) from within the container via HTTP daemon on localhost:7437."
+    depends_on: []
+    used_by: []
+    key_data_files:
+      - "~/.genny/host_tools.json  (registered tool configs)"
+      - "scripts/host_tools_daemon.py  (HTTP daemon on port 7437)"
+    auger_rules:
+      - "Container uses --network host so localhost:7437 is shared with host"
+      - "open_path(tool_key, path) auto-strips /host prefix"
+      - "Registered tools: vscode, intellij-community, intellij-ultimate, chrome, terminal"
+
+  pods:
+    title: "Pods"
+    purpose: "Shows Kubernetes pod status across namespaces via Rancher API. Real-time status for running deployments."
+    depends_on: [api_config]
+    used_by: [story_to_prod]
+    key_data_files:
+      - "~/.genny/.env  (RANCHER_URL, RANCHER_BEARER_TOKEN)"
+    auger_rules:
+      - "Uses Rancher API — not direct kubectl from container"
+
+  panner:
+    title: "Panner"
+    purpose: "Auto-sources kubectl context and DataDog dashboards. Phase 1: read-only namespace/pod visibility."
+    depends_on: [api_config]
+    used_by: []
+    key_data_files: []
+    auger_rules:
+      - "Never use kubectl for FCS/prod — always Flux config PR for deployments"
+
+  k8s_explorer:
+    title: "K8s Explorer"
+    purpose: "Browses Kubernetes resources (pods, services, configmaps, secrets) across clusters."
+    depends_on: [api_config]
+    used_by: []
+    key_data_files:
+      - "~/.genny/.env  (RANCHER_URL, RANCHER_BEARER_TOKEN)"
+    auger_rules:
+      - "Read-only exploration only — never kubectl apply/delete from container"
+
+  shell_terminal:
+    title: "Bash $"
+    purpose: "Embedded bash terminal inside the Genny platform container. Full shell access."
+    depends_on: []
+    used_by: []
+    auger_rules:
+      - "Running inside container — /host prefix accesses host filesystem"
+      - "Git push uses HTTPS not SSH from container"
+
+  cryptkeeper_lite:
+    title: "Cryptkeeper Lite"
+    purpose: "Decrypts ENC(...) values in flux config YAML files. Used to read encrypted secrets without exposing them."
+    depends_on: [api_config]
+    used_by: [flux_config, story_to_prod]
+    auger_rules:
+      - "Never log or display decrypted secret values"
+
+  production_release:
+    title: "Release Manager"
+    purpose: "Tracks production deployment records: change numbers, services, PRs, image tags. SQLite-backed deployment log."
+    depends_on: []
+    used_by: []
+    key_data_files:
+      - "~/.genny/logs/deployments.db"
+    auger_rules:
+      - "Deployment record #1 pre-loaded for ASSIST3-31091 (Data Utils 1.5.4.0 DME)"
+      - "Staging deployments require the same release discipline as prod: Jira story + Confluence deployment instructions before deploy"
+
+  artifactory:
+    title: "Artifactory"
+    purpose: "Browse, pull, push, and run Docker images from JFrog Artifactory (artifactory.helix.gsa.gov). Primary image store for all ASSIST builds."
+    depends_on: [api_config]
+    used_by: [story_to_prod, flux_config]
+    key_data_files:
+      - "~/.genny/.env  (ARTIFACTORY_URL, ARTIFACTORY_API_KEY, ARTIFACTORY_USERNAME)"
+    auger_rules:
+      - "Registry is artifactory.helix.gsa.gov — not Docker Hub or GCR"
+      - "Image tags promoted to prod via Flux config PR, never direct push"
+    session_resume_hint: "Use ARTIFACTORY_URL + ARTIFACTORY_API_KEY from ~/.genny/.env for API calls"
+
+  cryptkeeper:
+    title: "Cryptkeeper"
+    purpose: "Encrypts/decrypts values using Jasypt via a Docker container. Full-featured version of Cryptkeeper Lite — runs containerized Jasypt."
+    depends_on: [api_config]
+    used_by: [flux_config]
+    auger_rules:
+      - "Requires Docker socket mounted — docker.sock must be available"
+      - "Use cryptkeeper_lite for fast decryption of existing ENC(...) values"
+
+  database:
+    title: "Database"
+    purpose: "SQL workbench for Auger. Connect to PostgreSQL/SQLite, execute queries, browse schema. Primary DB is ASSIST core dev DB on RDS."
+    depends_on: [api_config]
+    used_by: []
+    key_data_files:
+      - "~/.genny/.env  (DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)"
+    auger_rules:
+      - "ASSIST core DB: postgresql assist-core-development-db-postgres.cluster-cxwm0hb0ofre.us-east-1.rds.amazonaws.com db=dev09"
+      - "Never run destructive DDL against prod — read-only queries preferred"
+
+  explorer:
+    title: "Explorer"
+    purpose: "File system browser for all mounted volumes and local container filesystem. Browse, view, and inspect files across container mounts."
+    depends_on: []
+    used_by: []
+    auger_rules:
+      - "Container root is /. Host filesystem is accessible at /host if mounted"
+      - "Genny platform source lives at ~/repos/auger-ai-sre-platform"
+
+  help_viewer:
+    title: "Help"
+    purpose: "Renders markdown documentation in a tabbed interface. Opens docs from the docs/ directory or any path on disk."
+    depends_on: []
+    used_by: []
+    key_data_files:
+      - "~/repos/auger-ai-sre-platform/docs/  (platform documentation)"
+    auger_rules:
+      - "Use open_doc(path) to open a doc programmatically from other widgets"
+
+  image_lab:
+    title: "Image Lab"
+    purpose: "PIL image preview and AI-driven image iteration. Opens images, applies AI prompts to transform them, previews results inline."
+    depends_on: []
+    used_by: []
+    auger_rules:
+      - "Requires Pillow (PIL) installed in container"
+
+  prompts:
+    title: "Prompts"
+    purpose: "Parameterized prompt and command library. Load, edit, and run saved prompts. User overrides in ~/.genny/prompts.yaml take priority over origin prompts."
+    depends_on: []
+    used_by: []
+    key_data_files:
+      - "~/.genny/prompts.yaml  (user prompt overrides and additions)"
+      - "genny/data/origin/prompts.yaml  (platform default prompts)"
+    auger_rules:
+      - "User prompts.yaml takes precedence over origin prompts.yaml"
+      - "Prompts support {variable} placeholder substitution"
+
+  prospector:
+    title: "Prospector"
+    purpose: "CVE analysis tool (Au Prospector). Scans container images and packages for known vulnerabilities. Integrated ASSIST POAM/Invicti finding tracker."
+    depends_on: [api_config]
+    used_by: []
+    auger_rules:
+      - "CVE findings feed into POAM — coordinate with security team before closing"
+
+  rcs_panels:
+    title: "Rules/Conventions/Standards"
+    purpose: "Editor panels for Genny rules, conventions, and standards. Two-pane editor: list with badges on left, detail editor on right. Changes saved to ~/.genny/*.yaml."
+    depends_on: []
+    used_by: []
+    key_data_files:
+      - "~/.genny/rules.yaml  (user rules — merged with origin/rules.yaml at runtime)"
+      - "~/.genny/conventions.yaml  (user conventions)"
+      - "genny/data/origin/rules.yaml  (platform default rules)"
+    auger_rules:
+      - "User ~/.genny/rules.yaml is merged with origin rules — user rules take precedence"
+      - "Add new rules here when team discovers new operational constraints"
+
+  servicenow:
+    title: "ServiceNow"
+    purpose: "Manage ServiceNow incidents, changes, and tasks (ITSM). Used for change management records tied to production deployments."
+    depends_on: [api_config]
+    used_by: [story_to_prod]
+    key_data_files:
+      - "~/.genny/.env  (SERVICENOW_INSTANCE, SERVICENOW_USER, SERVICENOW_PASSWORD)"
+    auger_rules:
+      - "Production changes require an approved ServiceNow change record"

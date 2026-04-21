@@ -9,9 +9,9 @@ services:
       args:
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
         BUILD_HASH: ${BUILD_HASH:-unknown}
-    image: auger-platform:latest
-    container_name: auger-platform
-    hostname: auger-platform
+    image: genny-platform:latest
+    container_name: genny-platform
+    hostname: genny-platform
 
     # DNS for github.com resolution (AWS VPC DNS doesn't resolve github.com)
     dns:
@@ -34,7 +34,7 @@ services:
     # Volume mounts for persistent data and host integration
     volumes:
       # Application code (for development)
-      - .:/home/auger/auger-platform
+      - .:/home/auger/genny-platform
       
       # Config directory (shared with host - same .env for local and docker)
       - ${HOME}/.auger:/home/auger/.auger

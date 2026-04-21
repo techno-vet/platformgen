@@ -1,10 +1,10 @@
-# Auger Platform — User Personalization Layer
+# Genny Platform — User Personalization Layer
 #
-# Built locally by auger-launch.sh to match the host user's uid/gid.
+# Built locally by genny-launch.sh to match the host user's uid/gid.
 # This eliminates ALL host↔container permission mismatches permanently.
 #
 # How it works:
-#   1. Pull the base image from Artifactory (auger-platform:latest)
+#   1. Pull the base image from Artifactory (genny-platform:latest)
 #   2. Create a user in the image with the host uid/gid
 #   3. Bake AUGER_HOST_HOME into the image so entrypoint.sh uses correct paths
 #
@@ -12,17 +12,17 @@
 # There is NO copy of /home/auger/ to the new user's home — that was the 10-15 min
 # slow step. This build now completes in ~30 seconds (just useradd + dirs).
 #
-# Called automatically by auger-launch.sh — never run directly.
+# Called automatically by genny-launch.sh — never run directly.
 #
 # To rebuild manually:
 #   docker build -f Dockerfile.user \
-#     --build-arg BASE_IMAGE=artifactory.helix.gsa.gov/gs-assist-docker-repo/auger-platform:latest \
+#     --build-arg BASE_IMAGE=artifactory.helix.gsa.gov/gs-assist-docker-repo/genny-platform:latest \
 #     --build-arg HOST_USER=$(whoami) \
 #     --build-arg HOST_UID=$(id -u) \
 #     --build-arg HOST_GID=$(id -g) \
-#     -t auger-platform-$(whoami):latest .
+#     -t genny-platform-$(whoami):latest .
 
-ARG BASE_IMAGE=artifactory.helix.gsa.gov/gs-assist-docker-repo/auger-platform:latest
+ARG BASE_IMAGE=artifactory.helix.gsa.gov/gs-assist-docker-repo/genny-platform:latest
 FROM ${BASE_IMAGE}
 
 ARG HOST_USER=auger
@@ -51,10 +51,10 @@ RUN if [ "${HOST_UID}" != "1000" ]; then \
 
 # Patch: exclude content_area.py from ui/ hot-reload loop to prevent SIGSEGV
 # (reloading a live Tkinter widget class from a background thread → exit 139).
-COPY auger/ui/hot_reload.py /home/auger/auger-platform/auger_baked/ui/hot_reload.py
+COPY auger/ui/hot_reload.py /home/auger/genny-platform/auger_baked/ui/hot_reload.py
 
 # Bake host identity into image environment.
-# entrypoint.sh and auger-launch.sh read these to construct correct paths.
+# entrypoint.sh and genny-launch.sh read these to construct correct paths.
 ENV AUGER_HOST_USER=${HOST_USER}
 ENV AUGER_HOST_UID=${HOST_UID}
 ENV AUGER_HOST_HOME=/home/${HOST_USER}

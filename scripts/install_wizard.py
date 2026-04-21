@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Auger SRE Platform — Install Wizard
+Genny SRE Platform — Install Wizard
 
 Standalone Tk GUI for first-time setup. Runs on the host (no Docker required).
 
@@ -26,12 +26,12 @@ from pathlib import Path
 # ── Paths ─────────────────────────────────────────────────────────────────────
 SCRIPT_DIR   = Path(__file__).resolve().parent
 REPO_DIR     = SCRIPT_DIR.parent
-AUGER_DIR    = Path.home() / ".auger"
+AUGER_DIR    = Path.home() / ".genny"
 ENV_FILE     = AUGER_DIR / ".env"
 ENV_TEMPLATE = REPO_DIR / ".env.example"
-LAUNCH_SH    = SCRIPT_DIR / "auger-launch.sh"
+LAUNCH_SH    = SCRIPT_DIR / "genny-launch.sh"
 ART_REGISTRY = "artifactory.helix.gsa.gov"
-AUGER_IMAGE = f"{ART_REGISTRY}/gs-assist-docker-repo/auger-platform:20260311"
+AUGER_IMAGE = f"{ART_REGISTRY}/gs-assist-docker-repo/genny-platform:20260311"
 GHE_HOST = "github.helix.gsa.gov"
 GHE_URL = f"https://{GHE_HOST}"
 GHE_API_USER = f"{GHE_URL}/api/v3/user"
@@ -45,13 +45,13 @@ ASTUTL_CANDIDATES = [
     Path.home() / "repos" / "devtools-scripts-6.1" / "au-silver" / "config" / ".astutl" / "astutl_secure_config.env",
 ]
 
-# Maps astutl key name → Auger .env key name (+ optional display label for logging)
+# Maps astutl key name → Genny .env key name (+ optional display label for logging)
 # "~" means "copy only if destination is not already set"
 ASTUTL_KEY_MAP = {
     # Artifactory
     "ARTIFACTORY_IDENTITY_TOKEN": "ARTIFACTORY_IDENTITY_TOKEN",
     "ARTIFACTORY_API_KEY":        "ARTIFACTORY_API_KEY",
-    "ARTIFACTORY_USER":           "ARTIFACTORY_USERNAME",       # astutl uses _USER, Auger uses _USERNAME
+    "ARTIFACTORY_USER":           "ARTIFACTORY_USERNAME",       # astutl uses _USER, Genny uses _USERNAME
     "ARTIFACTORY_PASSWORD":       "ARTIFACTORY_PASSWORD",
     # GitHub / Copilot (github.com)
     "GH_TOKEN":                   "GH_TOKEN",
@@ -63,12 +63,12 @@ ASTUTL_KEY_MAP = {
     "JIRA_PAT":                   "JIRA_API_TOKEN",
     # Jenkins
     "JENKINS_API_KEY":            "JENKINS_API_TOKEN",
-    # DataDog  (astutl uses DD_*, Auger uses DATADOG_*)
+    # DataDog  (astutl uses DD_*, Genny uses DATADOG_*)
     "DD_API_KEY":                 "DATADOG_API_KEY",
     "DD_APP_KEY":                 "DATADOG_APP_KEY",
     # Rancher
     "RANCHER_BEARER_TOKEN":       "RANCHER_BEARER_TOKEN",
-    # AWS per-env buckets → Auger stores as AWS_1/2/3/4 slots
+    # AWS per-env buckets → Genny stores as AWS_1/2/3/4 slots
     # DEV / TEST / STAGING / PROD → slots 1-4
     "DEV_S3_AWS_ACCESS_KEY_ID":       "AWS_1_ACCESS_KEY_ID",
     "DEV_S3_AWS_SECRET_ACCESS_KEY":   "AWS_1_SECRET_ACCESS_KEY",
@@ -86,7 +86,7 @@ ASTUTL_KEY_MAP = {
     "LOCAL_CRYPTKEEPER_KEY":    "LOCAL_CRYPTKEEPER_KEY",
 }
 
-# ── Theme (matches Auger dark theme) ──────────────────────────────────────────
+# ── Theme (matches Genny dark theme) ──────────────────────────────────────────
 BG     = "#1e1e1e"
 BG2    = "#2d2d2d"
 FG     = "#d4d4d4"
@@ -110,7 +110,7 @@ class WizardWindow:
         self._tk = tk
 
         self.root = tk.Tk()
-        self.root.title("Auger SRE Platform — Setup")
+        self.root.title("Genny SRE Platform — Setup")
         self.root.geometry("720x560")
         self.root.configure(bg=BG)
         self.root.resizable(True, True)
@@ -130,7 +130,7 @@ class WizardWindow:
         hdr = tk.Frame(self.root, bg=ACCENT, pady=10)
         hdr.pack(fill=tk.X)
         tk.Label(
-            hdr, text="🔩  Auger SRE Platform — First-Time Setup",
+            hdr, text="🔩  Genny SRE Platform — First-Time Setup",
             bg=ACCENT, fg="white", font=("Segoe UI", 13, "bold"),
         ).pack(side=tk.LEFT, padx=16)
 
@@ -221,7 +221,7 @@ class WizardWindow:
             self.log_text.see(tk.END)
         self.root.after(0, _add)
 
-    def ask_secret(self, prompt, title="Auger Setup"):
+    def ask_secret(self, prompt, title="Genny Setup"):
         from tkinter import simpledialog
         result  = [None]
         ev      = threading.Event()
@@ -232,7 +232,7 @@ class WizardWindow:
         ev.wait()
         return result[0] or ""
 
-    def ask_text(self, prompt, title="Auger Setup"):
+    def ask_text(self, prompt, title="Genny Setup"):
         """Modal plain-text dialog — blocks the background thread."""
         from tkinter import simpledialog
         result  = [None]
@@ -249,7 +249,7 @@ class WizardWindow:
         def _finish():
             self.close_btn.configure(state="normal")
             if success:
-                self.status_var.set("✅  Setup complete — Auger is running")
+                self.status_var.set("✅  Setup complete — Genny is running")
             else:
                 self.status_var.set("⚠️  Setup incomplete — see messages above")
         self.root.after(0, _finish)
@@ -309,7 +309,7 @@ def _gh_token_valid(token):
             "https://api.github.com/user",
             headers={
                 "Authorization": f"Bearer {token}",
-                "User-Agent": "auger-install-wizard/1.0",
+                "User-Agent": "genny-install-wizard/1.0",
             },
         )
         # Bypass corporate proxy for external calls
@@ -326,7 +326,7 @@ def _ghe_token_valid(token):
             GHE_API_USER,
             headers={
                 "Authorization": f"token {token}",
-                "User-Agent": "auger-install-wizard/1.0",
+                "User-Agent": "genny-install-wizard/1.0",
             },
         )
         with urllib.request.urlopen(req, timeout=8) as resp:
@@ -355,10 +355,10 @@ def _art_login_valid(user, key):
         return False
 
 
-def _find_host_auger_bin():
+def _find_host_genny_bin():
     candidates = [
-        shutil.which("auger"),
-        str(Path.home() / ".local" / "bin" / "auger"),
+        shutil.which("genny"),
+        str(Path.home() / ".local" / "bin" / "genny"),
     ]
     for candidate in candidates:
         if candidate and Path(candidate).exists():
@@ -377,7 +377,7 @@ def _find_host_copilot_bin():
     return ""
 
 
-def _install_host_auger():
+def _install_host_genny():
     env = os.environ.copy()
     env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
     user_bin = str(Path.home() / ".local" / "bin")
@@ -471,7 +471,7 @@ def _detect_gh_token():
     # 1. Already saved
     tok = _read_env_key(ENV_FILE, "GH_TOKEN")
     if tok:
-        return tok, "~/.auger/.env"
+        return tok, "~/.genny/.env"
 
     # 2. gh CLI
     try:
@@ -513,7 +513,7 @@ def _detect_ghe_token():
     """Returns (token, source) — empty strings if nothing found."""
     tok = _read_env_key(ENV_FILE, "GHE_TOKEN")
     if tok:
-        return tok, "~/.auger/.env"
+        return tok, "~/.genny/.env"
 
     for var in ("GHE_TOKEN", "GH_ENTERPRISE_TOKEN"):
         val = os.environ.get(var, "")
@@ -559,20 +559,20 @@ def _find_astutl_file():
 
 def _import_from_astutl(astutl_path):
     """
-    Read astutl_secure_config.env and copy known keys to ~/.auger/.env.
+    Read astutl_secure_config.env and copy known keys to ~/.genny/.env.
     Only writes a key if the destination is not already set.
-    Returns list of (auger_key, astutl_key) pairs that were imported.
+    Returns list of (genny_key, astutl_key) pairs that were imported.
     """
     imported = []
-    for astutl_key, auger_key in ASTUTL_KEY_MAP.items():
+    for astutl_key, genny_key in ASTUTL_KEY_MAP.items():
         val = _read_env_key(astutl_path, astutl_key)
         if not val:
             continue
-        existing = _read_env_key(ENV_FILE, auger_key)
+        existing = _read_env_key(ENV_FILE, genny_key)
         if existing:
             continue  # already set — don't overwrite
-        _set_env_key(auger_key, val)
-        imported.append((auger_key, astutl_key))
+        _set_env_key(genny_key, val)
+        imported.append((genny_key, astutl_key))
     return imported
 
 
@@ -587,7 +587,7 @@ def _detect_art_creds():
     it = _read_env_key(ENV_FILE, "ARTIFACTORY_IDENTITY_TOKEN") or os.environ.get("ARTIFACTORY_IDENTITY_TOKEN", "")
     ak = _read_env_key(ENV_FILE, "ARTIFACTORY_API_KEY") or os.environ.get("ARTIFACTORY_API_KEY", "")
     if user and (it or ak):
-        return user, it, ak, "~/.auger/.env / environment"
+        return user, it, ak, "~/.genny/.env / environment"
 
     astutl = _find_astutl_file()
     if astutl:
@@ -607,12 +607,12 @@ def _run_setup(wiz):
     w = wiz
 
     w.log_line("")
-    w.log_line("  Auger SRE Platform — Setting up your environment", "bold")
+    w.log_line("  Genny SRE Platform — Setting up your environment", "bold")
     w.log_line("")
 
     seeded_template = _seed_env_template()
     if seeded_template:
-        w.log_line("  Seeded ~/.auger/.env from .env.example so it can be pre-filled before onboarding.", "dim")
+        w.log_line("  Seeded ~/.genny/.env from .env.example so it can be pre-filled before onboarding.", "dim")
         w.log_line("")
 
     # ═══════════════════════════════════════════════════════════════════════
@@ -628,9 +628,9 @@ def _run_setup(wiz):
             w.log_line(f"✅  {len(imported)} key(s) imported", "ok")
             # Group by service for readable output
             service_groups = {}
-            for auger_key, astutl_key in imported:
-                svc = auger_key.split("_")[0]
-                service_groups.setdefault(svc, []).append(auger_key)
+            for genny_key, astutl_key in imported:
+                svc = genny_key.split("_")[0]
+                service_groups.setdefault(svc, []).append(genny_key)
             for svc, keys in sorted(service_groups.items()):
                 w.log_line(f"    {svc}: {', '.join(keys)}", "dim")
         else:
@@ -660,11 +660,11 @@ def _run_setup(wiz):
 
     while not gh_ok:
         w.log_line("")
-        w.log_line("  A github.com Personal Access Token is required for Ask Auger.", "dim")
+        w.log_line("  A github.com Personal Access Token is required for Ask Genny.", "dim")
         w.log_line("  1. Go to: https://github.com/settings/personal-access-tokens", "dim")
         w.log_line("  2. Click 'Generate new token (fine-grained)'", "dim")
         w.log_line("  3. Permission required: ✅ Copilot > Copilot requests (read-only)", "dim")
-        w.log_line("     (No other scopes needed for Ask Auger)", "dim")
+        w.log_line("     (No other scopes needed for Ask Genny)", "dim")
         w.open_link("Open GitHub token page", "https://github.com/settings/personal-access-tokens")
         w.log_line("")
         tok = w.ask_secret(
@@ -672,12 +672,12 @@ def _run_setup(wiz):
             "Create one at:\n"
             "https://github.com/settings/personal-access-tokens\n\n"
             "Required permission: Copilot > Copilot requests (read-only)\n\n"
-            "Leave blank to skip — Ask Auger won't work until GH_TOKEN is set.",
+            "Leave blank to skip — Ask Genny won't work until GH_TOKEN is set.",
             title="GitHub Copilot Token",
         )
         if not tok:
-            w.log_line("  ⚠️  Skipped — Ask Auger will not function until GH_TOKEN is added.", "warn")
-            w.log_line("      Edit ~/.auger/.env to add it later.", "dim")
+            w.log_line("  ⚠️  Skipped — Ask Genny will not function until GH_TOKEN is added.", "warn")
+            w.log_line("      Edit ~/.genny/.env to add it later.", "dim")
             break
         w.log_inline("  Verifying… ")
         if _gh_token_valid(tok):
@@ -713,8 +713,8 @@ def _run_setup(wiz):
 
     while not ghe_ok:
         w.log_line("")
-        w.log_line("  A github.helix.gsa.gov token powers the GitHub widget, Prospector, and HTTPS git flows inside Auger.", "dim")
-        w.log_line("  If you cloned with VS Code or browser auth, Auger still needs a separate GHE token in ~/.auger/.env.", "dim")
+        w.log_line("  A github.helix.gsa.gov token powers the GitHub widget, Prospector, and HTTPS git flows inside Genny.", "dim")
+        w.log_line("  If you cloned with VS Code or browser auth, Genny still needs a separate GHE token in ~/.genny/.env.", "dim")
         w.log_line(f"  Get it at: {GHE_URL}/settings/tokens", "dim")
         w.log_line("  Recommended scopes: repo  read:user", "dim")
         w.open_link("Open Enterprise GitHub token page", f"{GHE_URL}/settings/tokens")
@@ -729,7 +729,7 @@ def _run_setup(wiz):
         )
         if not tok:
             w.log_line("  ⚠️  Skipped — GitHub Enterprise features will remain limited until GHE_TOKEN is added.", "warn")
-            w.log_line("      Edit ~/.auger/.env to add it later.", "dim")
+            w.log_line("      Edit ~/.genny/.env to add it later.", "dim")
             break
         w.log_inline(f"  Verifying against {GHE_HOST}… ")
         if _ghe_token_valid(tok):
@@ -743,42 +743,42 @@ def _run_setup(wiz):
     w.log_line("")
 
     # ═══════════════════════════════════════════════════════════════════════
-    # STEP 1c — Host auger CLI
+    # STEP 1c — Host genny CLI
     # ═══════════════════════════════════════════════════════════════════════
-    w.log_line("  ── Step 1c: Host Auger CLI ───────────────────────────", "h2")
-    w.set_status("Checking host auger CLI…")
+    w.log_line("  ── Step 1c: Host Genny CLI ───────────────────────────", "h2")
+    w.set_status("Checking host genny CLI…")
 
-    host_auger = _find_host_auger_bin()
+    host_genny = _find_host_genny_bin()
     host_copilot = _find_host_copilot_bin()
-    if host_auger:
-        w.log_line(f"  ✅  Host auger CLI already available at {host_auger}", "ok")
+    if host_genny:
+        w.log_line(f"  ✅  Host genny CLI already available at {host_genny}", "ok")
     elif gh_ok:
-        w.log_line("  📦  Installing host auger CLI so Ask Auger works from any terminal…", "dim")
-        install_result = _install_host_auger()
+        w.log_line("  📦  Installing host genny CLI so Ask Genny works from any terminal…", "dim")
+        install_result = _install_host_genny()
         if isinstance(install_result, Exception):
-            w.log_line(f"  ⚠️  Host auger install error: {install_result}", "warn")
+            w.log_line(f"  ⚠️  Host genny install error: {install_result}", "warn")
             w.log_line("      You can retry later with: python3 -m pip install --user --upgrade .", "dim")
         elif install_result.returncode == 0:
-            host_auger = _find_host_auger_bin()
-            if host_auger:
-                w.log_line(f"  ✅  Host auger CLI installed at {host_auger}", "ok")
+            host_genny = _find_host_genny_bin()
+            if host_genny:
+                w.log_line(f"  ✅  Host genny CLI installed at {host_genny}", "ok")
             else:
-                w.log_line("  ⚠️  pip reported success but ~/.local/bin/auger was not found", "warn")
+                w.log_line("  ⚠️  pip reported success but ~/.local/bin/genny was not found", "warn")
                 w.log_line("      Retry later with: python3 -m pip install --user --upgrade .", "dim")
         else:
             err = (install_result.stderr or install_result.stdout or "").strip()
-            w.log_line("  ⚠️  Host auger install failed — continuing with platform setup", "warn")
+            w.log_line("  ⚠️  Host genny install failed — continuing with platform setup", "warn")
             if err:
                 w.log_line(f"      {err.splitlines()[-1]}", "dim")
             w.log_line("      Retry later with: python3 -m pip install --user --upgrade .", "dim")
     else:
-        w.log_line("  ⚠️  Skipping host auger install because no valid GitHub token is configured yet.", "warn")
+        w.log_line("  ⚠️  Skipping host genny install because no valid GitHub token is configured yet.", "warn")
 
-    host_auger = _find_host_auger_bin()
+    host_genny = _find_host_genny_bin()
     if host_copilot:
         w.log_line(f"  ✅  Host copilot CLI already available at {host_copilot}", "ok")
-    elif host_auger:
-        w.log_line("  📦  Installing standalone Copilot CLI required by terminal auger…", "dim")
+    elif host_genny:
+        w.log_line("  📦  Installing standalone Copilot CLI required by terminal genny…", "dim")
         copilot_result = _install_host_copilot()
         if isinstance(copilot_result, Exception):
             w.log_line(f"  ⚠️  Host copilot install error: {copilot_result}", "warn")
@@ -792,12 +792,12 @@ def _run_setup(wiz):
                 w.log_line("      Retry later with: curl -fsSL https://gh.io/copilot-install | bash", "dim")
         else:
             err = (copilot_result.stderr or copilot_result.stdout or "").strip()
-            w.log_line("  ⚠️  Host copilot CLI install failed — terminal Ask Auger may not work yet", "warn")
+            w.log_line("  ⚠️  Host copilot CLI install failed — terminal Ask Genny may not work yet", "warn")
             if err:
                 w.log_line(f"      {err.splitlines()[-1]}", "dim")
             w.log_line("      Retry later with: curl -fsSL https://gh.io/copilot-install | bash", "dim")
     else:
-        w.log_line("  ⚠️  Skipping host copilot install until host auger CLI is available.", "warn")
+        w.log_line("  ⚠️  Skipping host copilot install until host genny CLI is available.", "warn")
 
     w.log_line("")
 
@@ -830,7 +830,7 @@ def _run_setup(wiz):
                     _set_env_key("ARTIFACTORY_IDENTITY_TOKEN", art_it)
                 if art_ak:
                     _set_env_key("ARTIFACTORY_API_KEY", art_ak)
-                w.log_line("  Credentials saved to ~/.auger/.env", "dim")
+                w.log_line("  Credentials saved to ~/.genny/.env", "dim")
             w.log_line(f"  Using saved {art_key_label} for Docker authentication", "dim")
             art_ok = True
         else:
@@ -841,7 +841,7 @@ def _run_setup(wiz):
 
     while not art_ok:
         w.log_line("")
-        w.log_line(f"  Credentials needed to pull the Auger image from {ART_REGISTRY}.", "dim")
+        w.log_line(f"  Credentials needed to pull the Genny image from {ART_REGISTRY}.", "dim")
         w.log_line("  Preferred: Identity Token  •  Legacy fallback: API Key", "dim")
         w.log_line(f"  Find them at: https://{ART_REGISTRY} → Profile / Authentication Settings", "dim")
         w.log_line("")
@@ -853,7 +853,7 @@ def _run_setup(wiz):
             )
         if not art_user:
             w.log_line("  ⚠️  Cannot pull image without Artifactory credentials.", "warn")
-            w.log_line("      Run 'bash scripts/auger-setup.sh' to retry.", "dim")
+            w.log_line("      Run 'bash scripts/genny-setup.sh' to retry.", "dim")
             break
 
         identity_key = w.ask_secret(
@@ -868,11 +868,11 @@ def _run_setup(wiz):
                 w.log_line("✅  success", "ok")
                 _set_env_key("ARTIFACTORY_USERNAME", art_user)
                 _set_env_key("ARTIFACTORY_IDENTITY_TOKEN", identity_key)
-                w.log_line("  Credentials saved to ~/.auger/.env", "dim")
+                w.log_line("  Credentials saved to ~/.genny/.env", "dim")
                 art_ok = True
                 art_key = identity_key
                 break
-            w.log_line("❌  Identity Token could not read the Auger image", "err")
+            w.log_line("❌  Identity Token could not read the Genny image", "err")
 
         api_key = w.ask_secret(
             f"Legacy Artifactory API Key (optional)\n(for user: {art_user})\n\n"
@@ -885,14 +885,14 @@ def _run_setup(wiz):
                 w.log_line("✅  success", "ok")
                 _set_env_key("ARTIFACTORY_USERNAME", art_user)
                 _set_env_key("ARTIFACTORY_API_KEY", api_key)
-                w.log_line("  Credentials saved to ~/.auger/.env", "dim")
+                w.log_line("  Credentials saved to ~/.genny/.env", "dim")
                 art_ok = True
                 art_key = api_key
                 break
-            w.log_line("❌  API key could not read the Auger image", "err")
+            w.log_line("❌  API key could not read the Genny image", "err")
 
         w.log_line("  ⚠️  Cannot pull image without working Artifactory credentials.", "warn")
-        w.log_line("      Run './scripts/install_wizard' again after updating ~/.auger/.env.", "dim")
+        w.log_line("      Run './scripts/install_wizard' again after updating ~/.genny/.env.", "dim")
         art_user = art_key = ""
 
     w.log_line("")
@@ -904,7 +904,7 @@ def _run_setup(wiz):
     w.set_status("Checking host pip dependencies…")
 
     _HOST_PIP_DEPS = [
-        ("faster_whisper", "faster-whisper", "voice transcription (Ask Auger mic input)"),
+        ("faster_whisper", "faster-whisper", "voice transcription (Ask Genny mic input)"),
     ]
     for _import_name, _pip_name, _desc in _HOST_PIP_DEPS:
         try:
@@ -930,24 +930,24 @@ def _run_setup(wiz):
     # ═══════════════════════════════════════════════════════════════════════
     # STEP 3 — Launch the platform
     # ═══════════════════════════════════════════════════════════════════════
-    w.log_line("  ── Step 3: Launching Auger Platform ──────────────────", "h2")
-    w.set_status("Launching Auger…")
+    w.log_line("  ── Step 3: Launching Genny Platform ──────────────────", "h2")
+    w.set_status("Launching Genny…")
 
     if not LAUNCH_SH.exists():
         w.log_line(f"  ❌  Launch script not found: {LAUNCH_SH}", "err")
-        w.log_line("  Make sure you're running from the auger-ai-sre-platform repo.", "dim")
+        w.log_line("  Make sure you're running from the genny-ai-sre-platform repo.", "dim")
         w.mark_done(success=False)
         return
 
     if not art_ok:
         w.log_line("  ⚠️  Skipping image pull — Artifactory credentials not configured.", "warn")
         w.log_line("  Add ARTIFACTORY_USERNAME plus ARTIFACTORY_IDENTITY_TOKEN", "dim")
-        w.log_line("  (or a legacy ARTIFACTORY_API_KEY if your account still has one) to ~/.auger/.env,", "dim")
-        w.log_line("  then run: bash scripts/auger-launch.sh", "dim")
+        w.log_line("  (or a legacy ARTIFACTORY_API_KEY if your account still has one) to ~/.genny/.env,", "dim")
+        w.log_line("  then run: bash scripts/genny-launch.sh", "dim")
         w.mark_done(success=False)
         return
 
-    w.log_line("  Running auger-launch.sh…", "dim")
+    w.log_line("  Running genny-launch.sh…", "dim")
     w.log_line("  (First run pulls ~500 MB — this may take a few minutes)", "dim")
     w.log_line("")
 
@@ -982,21 +982,21 @@ def _run_setup(wiz):
         proc.wait()
 
         # Exit 143 = SIGTERM (128+15): bash received SIGTERM during cleanup
-        # (e.g. tray applet launch, sleep). Auger itself may still be running.
+        # (e.g. tray applet launch, sleep). Genny itself may still be running.
         # Verify by checking docker ps rather than trusting the exit code.
         container_up = False
         try:
             r = subprocess.run(
-                ["docker", "ps", "--filter", "name=auger-platform",
+                ["docker", "ps", "--filter", "name=genny-platform",
                  "--format", "{{.Names}}"],
                 capture_output=True, text=True, timeout=5)
-            container_up = "auger-platform" in r.stdout
+            container_up = "genny-platform" in r.stdout
         except Exception:
             pass
 
         if proc.returncode == 0 or (proc.returncode == 143 and container_up):
             w.log_line("")
-            w.log_line("  ✅  Auger is running!", "ok")
+            w.log_line("  ✅  Genny is running!", "ok")
             w.log_line("  The platform window should now appear on your desktop.", "dim")
 
             # Verify daemon health
@@ -1010,23 +1010,23 @@ def _run_setup(wiz):
 
             # Verify tray applet
             try:
-                r2 = subprocess.run(["pgrep", "-f", "auger_tray.py"],
+                r2 = subprocess.run(["pgrep", "-f", "genny_tray.py"],
                                     capture_output=True, text=True, timeout=3)
                 if r2.stdout.strip():
                     w.log_line("  ✅  System tray icon is running", "ok")
                 else:
-                    w.log_line("  ⚠️  Tray icon not detected — check ~/.auger/tray.log", "warn")
+                    w.log_line("  ⚠️  Tray icon not detected — check ~/.genny/tray.log", "warn")
             except Exception:
                 pass
 
             w.log_line("")
-            w.log_line("  💡 Ask Auger is ready — type any question into the Ask Auger panel.", "info")
+            w.log_line("  💡 Ask Genny is ready — type any question into the Ask Genny panel.", "info")
             w.log_line("  💡 Open the API Keys+ tab (🔑) to configure additional integrations.", "info")
             w.log_line("  💡 Need help? Type: what can you do?", "info")
             w.mark_done(success=True)
         else:
             w.log_line(f"  ❌  Launch script exited with code {proc.returncode}", "err")
-            w.log_line("  Run:  docker logs auger-platform  for details.", "dim")
+            w.log_line("  Run:  docker logs genny-platform  for details.", "dim")
             w.mark_done(success=False)
 
     except FileNotFoundError:
@@ -1048,7 +1048,7 @@ def main():
         print("Install it with:  sudo apt-get install -y python3-tk")
         print("")
         print("Falling back to the bash installer…")
-        bash_setup = SCRIPT_DIR / "auger-setup.sh"
+        bash_setup = SCRIPT_DIR / "genny-setup.sh"
         if bash_setup.exists():
             os.execv("/bin/bash", ["/bin/bash", str(bash_setup)])
         sys.exit(1)

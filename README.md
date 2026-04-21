@@ -1,29 +1,19 @@
-# Auger Platform
-### *Drill Down With Auger* 🔩
+# PlatformGen — Powered by Genny AI
+### *Build Anything with Genny* 🧩
 
-> ⚠️ **Alpha Release** - Currently in alpha testing. See [ALPHA_TESTING.md](ALPHA_TESTING.md) for testing guide.
+> ⚠️ **Alpha Release** - Phase 1 rebrand complete. See [ALPHA_TESTING.md](ALPHA_TESTING.md) for testing guide.
 
-**AI-powered SRE platform with dynamic widgets and chat assistant**
+**AI Platform Builder — dynamic widgets, Genny AI agent, and a Lego-style dependency system**
 
-Auger Platform is a comprehensive tool for SREs, developers, BAs, and POs that provides:
-- 🤖 **Ask Auger** - AI chat assistant to help configure and use the platform
+PlatformGen (AskGenny.ai) is a flexible AI platform builder for developers, SREs, BAs, and POs:
+- 🤖 **Ask Genny** - AI chat assistant (Phase 2: wired to GennyRunner/smolagents)
 - 📊 **Dynamic Widgets** - Pods monitoring, GitHub PRs, ServiceNow tickets, CVE scanning, and more  
 - 🔐 **Secure Credential Management** - Encrypted secrets, environment-based configuration
 - 🔄 **Hot Reload** - Develop and test widgets without restarting
 - 🎨 **Modern UI** - Dark theme, responsive design
 - 🔌 **Extensible** - Easy to add custom widgets and integrations
 
----
-
-## Alpha Testing
-
-**Status**: Alpha 0.1.0 (February 2026)
-
-✅ **What works**: CLI, Ask Auger, GitHub widget, configuration management  
-⚠️ **Partial**: ServiceNow (needs cookies), DataDog (needs keys)  
-❌ **Not ready**: Cryptkeeper, Database, Panner widgets
-
-👉 **See [ALPHA_TESTING.md](ALPHA_TESTING.md) for full testing guide**
+> **Enterprise users:** Zscaler certs are included in `zscaler_certs/` — copy as needed for your SSL setup.
 
 ---
 
@@ -37,23 +27,22 @@ Auger Platform is a comprehensive tool for SREs, developers, BAs, and POs that p
 ### Installation
 
 ```bash
-# 1. Get the repo into ~/repos/auger-ai-sre-platform
-#    (SSH, HTTPS, or VS Code source control are all fine)
-git clone https://github.helix.gsa.gov/assist/auger-ai-sre-platform.git ~/repos/auger-ai-sre-platform
+# 1. Clone the repo
+git clone https://github.com/techno-vet/platformgen.git ~/repos/platformgen
 
 # 2. Run the install wizard — one entry point for everyone
-cd ~/repos/auger-ai-sre-platform && ./scripts/install_wizard
+cd ~/repos/platformgen && ./scripts/install_wizard
 ```
 
-Optional before onboarding: `cp .env.example ~/.auger/.env` and pre-fill any keys you already have.
+Optional before onboarding: `cp .env.example ~/.genny/.env` and pre-fill any keys you already have.
 
-The wizard handles token detection and prompts for missing `GH_TOKEN`, `GHE_TOKEN`, and Artifactory credentials early, installs the host `auger` CLI for terminal Ask Auger, pulls Docker images, and sets up the GNOME launcher. After first install, launch Auger from your app grid. On workspace login, Auger auto-starts the task tray so users can launch the platform from the tray or from the app grid.
+The wizard handles token detection and prompts for missing `GH_TOKEN` and other credentials, installs the host `genny` CLI for terminal Ask Genny, pulls Docker images, and sets up the GNOME launcher.
 
 ---
 
 ## Features
 
-- **Ask Auger Chat** - AI assistant helps configure integrations
+- **Ask Genny Chat** - AI assistant helps configure integrations
 - **Pods Monitor** - DataDog Kubernetes pod monitoring
 - **GitHub** - PRs, repos, CI/CD status
 - **ServiceNow** - Incidents, changes (web scraping, no API key!)
@@ -66,9 +55,8 @@ The wizard handles token detection and prompts for missing `GH_TOKEN`, `GHE_TOKE
 ## Documentation
 
 - [Quick Start Guide](docs/QUICKSTART.md)
-- [Configuration Guide](docs/README_CONFLUENCE_INTEGRATION.md)
-- [Widget Development](docs/HOW_DYNAMIC_WIDGETS_WORK.md)
-- [Distribution Plan](docs/AUGER_DISTRIBUTION_PLAN.md)
+- [PlatformGen Vision](PLATFORMGEN.md)
+- [Configuration Guide](docs/README_API_CONFIG.md)
 
 ---
 
@@ -76,29 +64,24 @@ The wizard handles token detection and prompts for missing `GH_TOKEN`, `GHE_TOKE
 
 ```bash
 # Dual-mode usage:
-auger                   # Open ask prompt (GUI)
-auger "your question"   # Quick ask (terminal)
+genny                   # Open ask prompt (GUI)
+genny "your question"   # Quick ask (terminal)
 
 # Platform commands:
-auger init              # Initialize configuration
-auger start             # Launch GUI
-auger doctor            # Run diagnostics
-auger config            # Show configuration
-auger widgets           # List available widgets
-auger test <integration> # Test integration (github, datadog, servicenow)
+genny init              # Initialize configuration
+genny start             # Launch GUI
+genny doctor            # Run diagnostics
+genny config            # Show configuration
+genny widgets           # List available widgets
 ```
-
-**New!** `auger` without subcommands acts as quick Copilot wrapper.
-
-See also: [Auger Ask Documentation](docs/AUGER_ASK.md)
 
 ---
 
 ## Support
 
-- **Issues:** https://github.helix.gsa.gov/assist/auger-ai-sre-platform/issues
-- **Ask Auger:** Open the chat panel for help!
+- **Issues:** https://github.com/techno-vet/platformgen/issues
+- **Ask Genny:** Open the chat panel for help!
 
 ---
 
-**Made with ❤️ by the GSA ASSIST Team**
+**Made with ❤️ by PlatformGen** | [PlatformGen.ai](https://platformgen.ai) | [AskGenny.ai](https://askgenny.ai)

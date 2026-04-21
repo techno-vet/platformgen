@@ -3,12 +3,12 @@ requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "auger-platform"
+name = "genny-platform"
 version = "0.1.0"
-description = "AI-powered SRE platform with dynamic widgets and chat assistant"
+description = "AI Platform Builder — build anything with Genny (PlatformGen.ai)"
 readme = "README.md"
 authors = [
-    {name = "GSA ASSIST Team", email = "assist@gsa.gov"}
+    {name = "PlatformGen", email = "platformgenai@gmail.com"}
 ]
 license = {text = "MIT"}
 classifiers = [
@@ -23,7 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-keywords = ["sre", "devops", "monitoring", "widgets", "ai-assistant", "datadog", "github", "servicenow"]
+keywords = ["ai", "platform-builder", "widgets", "smolagents", "genny", "devops", "monitoring", "datadog", "github"]
 dependencies = [
     "requests>=2.31.0",
     "python-dotenv>=1.0.0",
@@ -58,19 +58,19 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.helix.gsa.gov/assist/auger-ai-sre-platform"
-Documentation = "https://github.helix.gsa.gov/assist/auger-ai-sre-platform/blob/main/docs"
-Repository = "https://github.helix.gsa.gov/assist/auger-ai-sre-platform"
-Issues = "https://github.helix.gsa.gov/assist/auger-ai-sre-platform/issues"
+Homepage = "https://github.com/techno-vet/platformgen"
+Documentation = "https://github.com/techno-vet/platformgen/blob/main/docs"
+Repository = "https://github.com/techno-vet/platformgen"
+Issues = "https://github.com/techno-vet/platformgen/issues"
 
 [project.scripts]
-auger = "auger.cli:cli_main"
+genny = "genny.cli:cli_main"
 
 [tool.setuptools]
-packages = ["auger", "auger.ui", "auger.ui.widgets", "auger.tools", "auger.integrations", "auger.data"]
+packages = ["genny", "genny.ui", "genny.ui.widgets", "genny.tools", "genny.integrations", "genny.data"]
 
 [tool.setuptools.package-data]
-auger = [
+genny = [
     "config/*.yaml",
     "data/origin/*.md",
     "ui/assets/*.png",

@@ -616,7 +616,7 @@ def demo_cryptkeeper():
             result = subprocess.run(
                 ["python3","-c",
                  f"import sys; sys.path.insert(0,'{REPO}'); "
-                 f"from auger.tools.cryptkeeper_lite import encrypt_value; "
+                 f"from genny.tools.cryptkeeper_lite import encrypt_value; "
                  f"print(encrypt_value('demo-secret-value', '{key}'))"],
                 capture_output=True, text=True, timeout=10)
             if result.returncode == 0:
@@ -1016,7 +1016,7 @@ def demo_create_widget():
         ("MG", "# auger/ui/widgets/uptime_monitor.py  ← Auger generates this"),
         ("GY", ""),
         ("CY", "from flet import *"),
-        ("CY", "from auger.ui.widgets._base import AugerWidget, make_icon"),
+        ("CY", "from genny.ui.widgets._base import AugerWidget, make_icon"),
         ("GY", ""),
         ("YL", "WIDGET_TITLE    = \"Uptime Monitor\"          # ✓ checklist item 1"),
         ("YL", "WIDGET_ICON_FUNC = staticmethod(make_icon)  # ✓ checklist item 2"),

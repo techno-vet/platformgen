@@ -1,22 +1,22 @@
-# Auger AI SRE Platform — Copilot Instructions
+# PlatformGen — Genny AI Platform — Copilot Instructions
 
-You are helping someone install, configure, or use the **Auger AI SRE Platform** — a Tkinter-based desktop SRE tool that runs in a Docker container on an Amazon WorkSpace (Ubuntu). When a user asks how to install or set up Auger, follow the steps below precisely. When they hit an error, use the troubleshooting section to diagnose and fix it.
+You are helping someone install, configure, or use the **PlatformGen — Genny AI Platform** — a Tkinter-based desktop SRE tool that runs in a Docker container on an Amazon WorkSpace (Ubuntu). When a user asks how to install or set up Genny, follow the steps below precisely. When they hit an error, use the troubleshooting section to diagnose and fix it.
 
 ---
 
-## What Is Auger?
+## What Is Genny?
 
-Auger is a desktop SRE dashboard built for the ASSIST program at GSA. It runs as a Docker container that renders its Python/Tkinter UI on the host X11 display. It contains ~24 widgets (Pods, GitHub, Artifactory, Cryptkeeper, Database, ServiceNow, Ask Auger, etc.) and an embedded AI assistant ("Ask Auger") powered by GitHub Copilot.
+Genny is a desktop SRE dashboard built for the ASSIST program at GSA. It runs as a Docker container that renders its Python/Tkinter UI on the host X11 display. It contains ~24 widgets (Pods, GitHub, Artifactory, Cryptkeeper, Database, ServiceNow, Ask Genny, etc.) and an embedded AI assistant ("Ask Genny") powered by GitHub Copilot.
 
 **Architecture:**
 ```
 Amazon WorkSpace (host)
-├── ~/.auger/          ← all config, tokens, task DB (persists forever)
+├── ~/.genny/          ← all config, tokens, task DB (persists forever)
 ├── ~/.kube/           ← kubectl config (mounted read-only)
 ├── ~/repos/           ← git repos (mounted read-write)
-└── Docker container: auger-platform
+└── Docker container: genny-platform
     ├── Python/Tk UI   ← renders on host X11 display
-    ├── auger CLI      ← wraps GitHub Copilot for Ask Auger
+    ├── genny CLI      ← wraps GitHub Copilot for Ask Genny
     └── host daemon    ← localhost:7437 (Jira login, browser control)
 ```
 
@@ -36,19 +36,19 @@ bash scripts/auger-setup.sh
 ```
 
 That's it. `auger-setup.sh` will:
-1. **Auto-detect** any existing GitHub Copilot token on your machine (checks `gh` CLI, env vars, git credential store, `~/.auger/.env`) — if found, asks if you want to use it
+1. **Auto-detect** any existing GitHub Copilot token on your machine (checks `gh` CLI, env vars, git credential store, `~/.genny/.env`) — if found, asks if you want to use it
 2. **Guide you** through creating a token if none is found (with exact steps)
 3. **Prompt for Artifactory credentials** if not already saved (FCS username + Artifactory API key)
-4. **Save everything** to `~/.auger/.env` and launch `auger-launch.sh`
+4. **Save everything** to `~/.genny/.env` and launch `auger-launch.sh`
 
 `auger-launch.sh` then:
 - Logs in to Artifactory and pulls the image (~500 MB, once only)
-- Starts the container with X11, `~/.auger/`, `~/.kube/`, and `~/repos/` mounted
-- Opens the Auger window on your desktop
+- Starts the container with X11, `~/.genny/`, `~/.kube/`, and `~/repos/` mounted
+- Opens the Genny window on your desktop
 
 ### GitHub Copilot token — what it is and where to get one
 
-The token must be from **github.com** (not the enterprise github.helix.gsa.gov). It's used for Ask Auger.
+The token must be from **github.com** (not the enterprise github.helix.gsa.gov). It's used for Ask Genny.
 
 **Check if you already have one:**
 ```bash
@@ -57,7 +57,7 @@ gh auth status   # shows github.com token if gh CLI is configured
 
 **Create a new one:**
 1. Go to: https://github.com/settings/tokens → Generate new token (classic)
-2. Name: `Auger Copilot`
+2. Name: `Genny Copilot`
 3. Scopes: ✅ `repo`  ✅ `read:user`  ✅ `copilot` (if available)
 4. Copy it — paste into `auger-setup.sh` when prompted
 
@@ -65,11 +65,11 @@ gh auth status   # shows github.com token if gh CLI is configured
 
 ### Step 3 — Add other credentials (when ready)
 
-Open the **API Keys+** widget (🔑 tab) or edit `~/.auger/.env` directly:
+Open the **API Keys+** widget (🔑 tab) or edit `~/.genny/.env` directly:
 
 | Widget | Key in `.env` | Where to get it |
 |--------|--------------|-----------------|
-| Ask Auger | `GH_TOKEN` | github.com → Settings → Tokens (set by wizard) |
+| Ask Genny | `GH_TOKEN` | github.com → Settings → Tokens (set by wizard) |
 | GitHub widget | `GHE_TOKEN` | github.helix.gsa.gov → Settings → Tokens |
 | Artifactory | `ARTIFACTORY_IDENTITY_TOKEN` | Artifactory UI → Profile → API Key |
 | Rancher/K8s | `RANCHER_BEARER_TOKEN` | Rancher UI → API Keys |
@@ -83,8 +83,8 @@ Open the **API Keys+** widget (🔑 tab) or edit `~/.auger/.env` directly:
 **Prerequisites:** Python 3.10+, `python3-tk` system package, X11 display
 
 ```bash
-git clone https://github.helix.gsa.gov/assist/auger-ai-sre-platform.git
-cd auger-ai-sre-platform
+git clone https://github.helix.gsa.gov/assist/platformgen.git
+cd platformgen
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .
@@ -103,25 +103,25 @@ sudo apt-get install -y python3-tk
 
 | File | Purpose |
 |------|---------|
-| `~/.auger/.env` | All credentials/tokens (600 permissions, never commit) |
-| `~/.auger/config.yaml` | App configuration |
-| `~/.auger/tasks.db` | SQLite task database |
-| `~/.auger/rules.yaml` | Auger AI operational rules |
-| `~/.auger/prompts.yaml` | User-defined prompt library |
-| `~/.auger/widget_screenshots/` | Cached widget screenshots |
+| `~/.genny/.env` | All credentials/tokens (600 permissions, never commit) |
+| `~/.genny/config.yaml` | App configuration |
+| `~/.genny/tasks.db` | SQLite task database |
+| `~/.genny/rules.yaml` | Genny AI operational rules |
+| `~/.genny/prompts.yaml` | User-defined prompt library |
+| `~/.genny/widget_screenshots/` | Cached widget screenshots |
 | `auger/ui/widgets/*.py` | Widget source files (hot-reloadable) |
 | `auger/data/widget_manifests.yaml` | Widget AI context metadata |
 
 ---
 
-## Updating Auger
+## Updating Genny
 
 ```bash
-docker rm -f auger-platform
+docker rm -f genny-platform
 bash auger-launch.sh
 ```
 
-All data in `~/.auger/` is preserved — it lives on the host, not in the container.
+All data in `~/.genny/` is preserved — it lives on the host, not in the container.
 
 ---
 
@@ -131,10 +131,10 @@ All data in `~/.auger/` is preserved — it lives on the host, not in the contai
 - Use your **FCS username** (not email) and your **Artifactory API key** (not your FCS password)
 - Get the API key: https://artifactory.helix.gsa.gov → click your username → Profile → API Key
 
-### "Auger window doesn't appear" / blank screen
+### "Genny window doesn't appear" / blank screen
 ```bash
 xhost +local:docker
-docker rm -f auger-platform
+docker rm -f genny-platform
 bash auger-launch.sh
 ```
 
@@ -146,23 +146,23 @@ bash auger-launch.sh
 
 ### Container exits immediately
 ```bash
-docker logs auger-platform
+docker logs genny-platform
 ```
 Look for Python import errors. Most common cause: `python3-tk` not available (Docker image issue — report to SRE).
 
-### "Ask Auger not responding" / no AI replies
+### "Ask Genny not responding" / no AI replies
 - Verify token: open **API Keys+** widget → check `GH_TOKEN` is set
 - Token must be from **github.com**, not github.helix.gsa.gov
 - Tokens expire — regenerate at https://github.com/settings/tokens if needed
 
 ### "ModuleNotFoundError" (venv install only)
 ```bash
-cd ~/repos/auger-ai-sre-platform
+cd ~/repos/platformgen
 pip install -e . --force-reinstall --no-deps
 ```
 
 ### GitHub widget shows no repos
-- Set `GHE_TOKEN` in `~/.auger/.env` — this is your **enterprise** github.helix.gsa.gov token
+- Set `GHE_TOKEN` in `~/.genny/.env` — this is your **enterprise** github.helix.gsa.gov token
 - Generate at: https://github.helix.gsa.gov/settings/tokens (scopes: `repo`, `read:user`)
 
 ---
@@ -171,26 +171,26 @@ pip install -e . --force-reinstall --no-deps
 
 **Terminal demo** (shows all 26 widget sections with animated output):
 ```bash
-python3 ~/repos/auger-ai-sre-platform/demo_auger_full.py --offline --auto
+python3 ~/repos/platformgen/demo_auger_full.py --offline --auto
 ```
 
 **UI slideshow** (HTML, opens in any browser):
 ```bash
 # After git pull:
-xdg-open ~/repos/auger-ai-sre-platform/demo_auger_ui.html
+xdg-open ~/repos/platformgen/demo_auger_ui.html
 ```
 
 ---
 
 ## Getting Help
 
-1. **Ask Auger directly** — once running, type any question into the Ask Auger panel
+1. **Ask Genny directly** — once running, type any question into the Ask Genny panel
 2. **Docs in the repo:**
    - `INSTALLATION_GUIDE.md` — full install reference
    - `ALPHA_TESTING.md` — alpha tester tasks and expected behavior
    - `FAQ.md` — token confusion, common setup questions
    - `docs/QUICKSTART.md` — fastest path to running
-3. **Report issues:** https://github.helix.gsa.gov/assist/auger-ai-sre-platform/issues
+3. **Report issues:** https://github.helix.gsa.gov/assist/platformgen/issues
 
 ---
 
@@ -206,5 +206,5 @@ Hot-reload workflow: write file → verify live in app (no restart needed) → c
 
 Git pushes always use HTTPS to `github.helix.gsa.gov`, never SSH, never github.com:
 ```bash
-git push https://${GHE_TOKEN}@github.helix.gsa.gov/assist/auger-ai-sre-platform.git <branch>
+git push https://${GHE_TOKEN}@github.helix.gsa.gov/assist/platformgen.git <branch>
 ```

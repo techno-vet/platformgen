@@ -1,6 +1,6 @@
-# What's Next - Auger Platform
+# What's Next - Genny Platform
 
-**Repository:** https://github.helix.gsa.gov/assist/auger-ai-sre-platform  
+**Repository:** https://github.helix.gsa.gov/assist/genny-ai-sre-platform  
 **Status:** ✅ Initial structure complete and pushed to GitHub
 
 ---
@@ -10,7 +10,7 @@
 1. **Repository Setup**
    - Complete Python package structure
    - PyPI-ready with pyproject.toml
-   - CLI infrastructure (`auger` command)
+   - CLI infrastructure (`genny` command)
    - Configuration management
    - All widgets and tools copied
    - Comprehensive documentation
@@ -28,7 +28,7 @@
 ## 🚧 What Needs Fixing (Before First Test)
 
 ### 1. Fix app.py Imports
-**Location:** `auger/app.py`
+**Location:** `genny/app.py`
 
 Current imports are absolute paths:
 ```python
@@ -36,7 +36,7 @@ Current imports are absolute paths:
 from ui.widgets.pods import PodsWidget
 
 # CHANGE TO:
-from auger.ui.widgets.pods import PodsWidget
+from genny.ui.widgets.pods import PodsWidget
 ```
 
 **ALL imports need updating** - search for `from ui.` and `import ui.`
@@ -47,14 +47,14 @@ from auger.ui.widgets.pods import PodsWidget
 config = yaml.safe_load(open('config.yaml'))
 
 # CHANGE TO:
-from auger.config_manager import AugerConfigManager
+from genny.config_manager import AugerConfigManager
 config_manager = AugerConfigManager()
 config = config_manager.to_dict()
 ```
 
 ### 3. Create Integration Test Functions
 
-Create `auger/integrations/github_integration.py`:
+Create `genny/integrations/github_integration.py`:
 ```python
 def test_github(config):
     """Test GitHub API connection"""
@@ -68,7 +68,7 @@ def test_github(config):
     return response.status_code == 200
 ```
 
-Create `auger/integrations/datadog_integration.py`:
+Create `genny/integrations/datadog_integration.py`:
 ```python
 def test_datadog(config):
     """Test DataDog API connection"""
@@ -99,13 +99,13 @@ In app.py, find widget loading code and update for package structure.
 
 ### 1. Install in Development Mode
 ```bash
-cd /home/bobbygblair/repos/auger-ai-sre-platform
+cd /home/bobbygblair/repos/genny-ai-sre-platform
 pip install -e .
 ```
 
 ### 2. Run Diagnostics
 ```bash
-auger doctor
+genny doctor
 ```
 
 Expected output:
@@ -117,31 +117,31 @@ Expected output:
 
 ### 3. Initialize
 ```bash
-auger init --token YOUR_GITHUB_TOKEN
+genny init --token YOUR_GITHUB_TOKEN
 ```
 
 Should create:
-- `~/.auger/config.yaml`
-- `~/.auger/.env`
+- `~/.genny/config.yaml`
+- `~/.genny/.env`
 
 ### 4. Check Config
 ```bash
-auger config
+genny config
 ```
 
 ### 5. List Widgets
 ```bash
-auger widgets
+genny widgets
 ```
 
 ### 6. Test Integration
 ```bash
-auger test github
+genny test github
 ```
 
 ### 7. Start GUI (After Fixes)
 ```bash
-auger start
+genny start
 ```
 
 ---
@@ -150,11 +150,11 @@ auger start
 
 ### Making Changes
 ```bash
-# 1. Make changes in auger/
-vim auger/cli.py
+# 1. Make changes in genny/
+vim genny/cli.py
 
 # 2. Changes are immediately available (editable install)
-auger --help
+genny --help
 
 # 3. Commit when ready
 git add .
@@ -165,19 +165,19 @@ git push origin main
 ### Adding New Widget
 ```bash
 # 1. Create widget file
-touch auger/ui/widgets/my_new_widget.py
+touch genny/ui/widgets/my_new_widget.py
 
 # 2. Implement widget class
 # 3. Add to config.yaml
 # 4. Test
-auger widgets
-auger start
+genny widgets
+genny start
 ```
 
 ### Running Tests (When Added)
 ```bash
 pytest
-pytest --cov=auger
+pytest --cov=genny
 ```
 
 ---
@@ -186,11 +186,11 @@ pytest --cov=auger
 
 1. **Fix imports in app.py** (~30 min)
    - Search and replace pattern
-   - Test with `python -m auger.app`
+   - Test with `python -m genny.app`
 
 2. **Create integration tests** (~20 min)
    - Copy patterns from above
-   - Test with `auger test all`
+   - Test with `genny test all`
 
 3. **Test installation flow** (~10 min)
    - Fresh venv
@@ -247,19 +247,19 @@ Changes take effect immediately (no reinstall needed)
 
 ### Test Without Installing
 ```bash
-python -m auger.cli --help
-python -m auger.app
+python -m genny.cli --help
+python -m genny.app
 ```
 
 ### Check Package Structure
 ```bash
-python -c "import auger; print(auger.__file__)"
-python -c "from auger.ui.widgets import pods; print(pods.__file__)"
+python -c "import genny; print(genny.__file__)"
+python -c "from genny.ui.widgets import pods; print(pods.__file__)"
 ```
 
 ### Debug Import Issues
 ```bash
-python -c "import sys; sys.path.insert(0, '.'); from auger import cli"
+python -c "import sys; sys.path.insert(0, '.'); from genny import cli"
 ```
 
 ---
@@ -268,19 +268,19 @@ python -c "import sys; sys.path.insert(0, '.'); from auger import cli"
 
 ### Run Diagnostics
 ```bash
-auger doctor
+genny doctor
 ```
 
 ### Check Logs
 ```bash
-tail -f ~/.auger/logs/auger.log  # If we add logging
+tail -f ~/.genny/logs/genny.log  # If we add logging
 ```
 
 ### Compare with Original
 Original location: `/home/bobbygblair/repos/devtools-scripts/au-silver/astutl_python/au_sre/`
 
-### Ask Auger!
-Once GUI is working, Ask Auger can help debug!
+### Ask Genny!
+Once GUI is working, Ask Genny can help debug!
 
 ---
 
