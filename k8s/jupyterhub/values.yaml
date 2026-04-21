@@ -3,6 +3,7 @@
 #           --namespace genny-hub --values k8s/jupyterhub/values.yaml
 
 hub:
+  baseUrl: "/"
   config:
     GitHubOAuthenticator:
       client_id: "REPLACE_GITHUB_CLIENT_ID"
@@ -18,14 +19,16 @@ hub:
 
   extraConfig:
     platformgen: |
-      # Inject GENNY_TIER from DB lookup (stub — Phase 3 billing wires this)
+      # Route user pods into genny-users namespace
+      c.KubeSpawner.namespace = "genny-users"
+      # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
       class GennyAuthenticator(GitHubOAuthenticator):
           async def pre_spawn_start(self, user, spawner):
               auth_state = await user.get_auth_state()
               if auth_state:
                   spawner.environment['GITHUB_USER'] = user.name
-                  spawner.environment['GENNY_TIER'] = 'free'  # billing webhook updates this
+                  spawner.environment['GENNY_TIER'] = 'free'
       c.JupyterHub.authenticator_class = GennyAuthenticator
 
 proxy:
@@ -67,7 +70,6 @@ singleuser:
         cpu_guarantee: 0.5
         mem_limit: "2G"
         mem_guarantee: "512M"
-        storage_capacity: "10Gi"
         environment:
           GENNY_TIER: "builder"
 
@@ -78,11 +80,8 @@ singleuser:
         cpu_guarantee: 1.0
         mem_limit: "4G"
         mem_guarantee: "1G"
-        storage_capacity: "10Gi"
         environment:
           GENNY_TIER: "team"
-
-  namespace: genny-users
 
 cull:
   enabled: true
@@ -97,19 +96,7 @@ scheduling:
     enabled: false   # single node — no need to schedule across nodes
 
 ingress:
-  enabled: true
-  ingressClassName: nginx
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
-  hosts:
-    - platformgen.ai
-  tls:
-    - hosts:
-        - platformgen.ai
-      secretName: platformgen-tls
+  enabled: false   # We manually patch the existing platformgen ingress to add /hub
 
 prePuller:
   hook:

@@ -10,6 +10,7 @@ Provides Genny with "hands":
 The agent runs in a background thread; callers subscribe via a callback that
 receives incremental step updates and the final answer.
 """
+import os
 import subprocess
 import threading
 import traceback
@@ -18,7 +19,7 @@ from typing import Callable
 
 from smolagents import ToolCallingAgent, LiteLLMModel, tool
 
-OLLAMA_BASE   = "http://localhost:11434"
+OLLAMA_BASE   = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = "qwen2.5-coder:14b"
 WORK_DIR      = str(Path.home() / "projects" / "platformgen")
 
@@ -106,10 +107,10 @@ ALL_TOOLS = [run_bash, read_file, write_file, list_directory]
 
 # ─── Agent builder ────────────────────────────────────────────────────────────
 
-def build_agent(model_name: str = DEFAULT_MODEL, step_callbacks=None) -> ToolCallingAgent:
+def build_agent(model_name: str = DEFAULT_MODEL, step_callbacks=None, ollama_base: str = OLLAMA_BASE) -> ToolCallingAgent:
     model = LiteLLMModel(
         model_id=f"ollama/{model_name}",
-        api_base=OLLAMA_BASE,
+        api_base=ollama_base,
     )
     return ToolCallingAgent(
         tools=ALL_TOOLS,
@@ -132,14 +133,15 @@ class GennyRunner:
     on_error(text) — called if an exception occurs
     """
 
-    def __init__(self, model_name: str = DEFAULT_MODEL):
+    def __init__(self, model_name: str = DEFAULT_MODEL, ollama_base: str = OLLAMA_BASE):
         self._model_name = model_name
+        self._ollama_base = ollama_base
         self._agent: ToolCallingAgent | None = None
         self._stop = False
 
     def _ensure_agent(self, cb):
         if self._agent is None:
-            self._agent = build_agent(self._model_name, step_callbacks=[cb])
+            self._agent = build_agent(self._model_name, step_callbacks=[cb], ollama_base=self._ollama_base)
         else:
             # update callbacks in case model was reset
             self._agent.step_callbacks = [cb]
