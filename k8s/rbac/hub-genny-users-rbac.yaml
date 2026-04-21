@@ -1,0 +1,27 @@
+# Allow the JupyterHub hub SA (in genny-hub) to spawn user pods/PVCs in genny-users
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jupyterhub-user-spawner
+  namespace: genny-users
+rules:
+- apiGroups: [""]
+  resources: ["pods", "persistentvolumeclaims", "secrets", "services", "configmaps", "events", "serviceaccounts"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jupyterhub-user-spawner
+  namespace: genny-users
+subjects:
+- kind: ServiceAccount
+  name: hub
+  namespace: genny-hub
+roleRef:
+  kind: Role
+  name: jupyterhub-user-spawner
+  apiGroup: rbac.authorization.k8s.io
