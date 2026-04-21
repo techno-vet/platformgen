@@ -27,6 +27,9 @@ hub:
     platformgen: |
       # Route user pods into genny-users namespace
       c.KubeSpawner.namespace = "genny-users"
+      # Give servers 3 minutes to become responsive after starting
+      c.Spawner.http_timeout = 180
+      c.Spawner.start_timeout = 300
       # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
       class GennyAuthenticator(GitHubOAuthenticator):
