@@ -13,8 +13,11 @@ export DISPLAY=${DISPLAY:-:1}
 Xvfb $DISPLAY -screen 0 1920x1080x24 -ac &
 sleep 1
 
-# ── Kiosk window manager (handles focus/clicks, no menus or terminal access) ─
-matchbox-window-manager -use_titlebar no &
+# ── Window manager: openbox with focus-follows-mouse ──────────────────────────
+# openbox properly passes all clicks to applications (matchbox uses click-to-
+# focus which "swallows" the first click instead of forwarding it to the app)
+openbox --sm-disable &
+sleep 0.5
 
 # ── Launch Genny tkinter platform (stdout->null suppresses unicode noise) ─────
 # Auto-restart loop: if genny crashes, it relaunches automatically
