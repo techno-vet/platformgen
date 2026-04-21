@@ -1,0 +1,118 @@
+# PlatformGen JupyterHub Helm values
+# Deploy: helm upgrade --install genny-hub jupyterhub/jupyterhub \
+#           --namespace genny-hub --values k8s/jupyterhub/values.yaml
+
+hub:
+  config:
+    GitHubOAuthenticator:
+      client_id: "REPLACE_GITHUB_CLIENT_ID"
+      client_secret: "REPLACE_GITHUB_CLIENT_SECRET"
+      oauth_callback_url: "https://platformgen.ai/hub/oauth_callback"
+      scope:
+        - read:user
+        - user:email
+    JupyterHub:
+      authenticator_class: github
+
+  cookieSecret: "ae530f05583792733d764fbf9ae0af8c8899d5c54eaf2eefded6b29682932000"
+
+  extraConfig:
+    platformgen: |
+      # Inject GENNY_TIER from DB lookup (stub — Phase 3 billing wires this)
+      from oauthenticator.github import GitHubOAuthenticator
+      class GennyAuthenticator(GitHubOAuthenticator):
+          async def pre_spawn_start(self, user, spawner):
+              auth_state = await user.get_auth_state()
+              if auth_state:
+                  spawner.environment['GITHUB_USER'] = user.name
+                  spawner.environment['GENNY_TIER'] = 'free'  # billing webhook updates this
+      c.JupyterHub.authenticator_class = GennyAuthenticator
+
+proxy:
+  secretToken: "ae530f05583792733d764fbf9ae0af8c8899d5c54eaf2eefded6b29682932000"
+  service:
+    type: ClusterIP
+
+singleuser:
+  image:
+    name: ghcr.io/techno-vet/genny-user
+    tag: latest
+    pullPolicy: Always
+  storage:
+    capacity: 1Gi
+    dynamic:
+      storageClass: local-path  # k3s default storage class
+  startTimeout: 300
+  cmd: null  # use image CMD
+  extraEnv:
+    OLLAMA_URL: "http://ollama.genny-shared.svc.cluster.local:11434"
+    PLATFORMGEN_VERSION: "0.3.0"
+
+  profileList:
+    - display_name: "🆓 Free"
+      description: "Shared GPU queue, idle culled after 20 minutes"
+      default: true
+      kubespawner_override:
+        cpu_limit: 0.5
+        cpu_guarantee: 0.1
+        mem_limit: "512M"
+        mem_guarantee: "128M"
+        environment:
+          GENNY_TIER: "free"
+
+    - display_name: "🔨 Builder — $19/mo"
+      description: "Priority GPU queue, always-on pod"
+      kubespawner_override:
+        cpu_limit: 2.0
+        cpu_guarantee: 0.5
+        mem_limit: "2G"
+        mem_guarantee: "512M"
+        storage_capacity: "10Gi"
+        environment:
+          GENNY_TIER: "builder"
+
+    - display_name: "👥 Team — $99/mo"
+      description: "Shared team workspace, 4 CPU, 4GB RAM"
+      kubespawner_override:
+        cpu_limit: 4.0
+        cpu_guarantee: 1.0
+        mem_limit: "4G"
+        mem_guarantee: "1G"
+        storage_capacity: "10Gi"
+        environment:
+          GENNY_TIER: "team"
+
+  namespace: genny-users
+
+cull:
+  enabled: true
+  timeout: 1200      # 20 minutes for free tier
+  maxAge: 0          # no hard max age
+  every: 300         # check every 5 min
+  concurrency: 5
+  removeNamedServers: false
+
+scheduling:
+  userScheduler:
+    enabled: false   # single node — no need to schedule across nodes
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+  hosts:
+    - platformgen.ai
+  tls:
+    - hosts:
+        - platformgen.ai
+      secretName: platformgen-tls
+
+prePuller:
+  hook:
+    enabled: false   # skip pre-pull on single node (already have image locally)
+  continuous:
+    enabled: false
