@@ -16,6 +16,27 @@ interface Widget {
   in_progress: boolean;
 }
 
+// Anchor-based desktop link avoids popup blockers.
+// Computes href client-side by stripping current proxy prefix and switching to :6080.
+function DesktopLink() {
+  const [href, setHref] = useState("#");
+  useEffect(() => {
+    const base = window.location.href.replace(/\/proxy\/\d+\/?.*$/, "");
+    setHref(`${base}/proxy/6080/vnc.html?autoconnect=true&resize=scale`);
+  }, []);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded border border-gray-600 no-underline"
+      title="Open Genny desktop (tkinter platform)"
+    >
+      🖥️ Desktop
+    </a>
+  );
+}
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", text: "👋 Hi, I'm **Genny**. Tell me what you want to build — or pick a widget on the left to get started." },
@@ -135,17 +156,7 @@ export default function Home() {
           </span>
           {thinking && <span className="text-yellow-400 text-xs animate-pulse">⏳ Genny is thinking...</span>}
           <div className="ml-auto">
-            <button
-              onClick={() => {
-                // Open noVNC desktop in new tab — path derived from current proxy prefix
-                const base = window.location.href.replace(/\/proxy\/\d+\/.*$/, "");
-                window.open(`${base}/proxy/6080/vnc.html?autoconnect=true&resize=scale`, "_blank");
-              }}
-              className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded border border-gray-600"
-              title="Open Linux desktop (runs tkinter apps)"
-            >
-              🖥️ Desktop
-            </button>
+            <DesktopLink />
           </div>
         </div>
 
