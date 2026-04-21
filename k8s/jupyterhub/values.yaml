@@ -30,6 +30,12 @@ hub:
       # Give servers 3 minutes to become responsive after starting
       c.Spawner.http_timeout = 180
       c.Spawner.start_timeout = 300
+      # User pods in genny-users can't resolve short "hub" hostname (different namespace).
+      # Inject full FQDN so jupyterhub-singleuser can reach the hub API.
+      c.KubeSpawner.hub_connect_url = "http://hub.genny-hub.svc.cluster.local:8081"
+      c.KubeSpawner.environment = {
+          'JUPYTERHUB_API_URL': 'http://hub.genny-hub.svc.cluster.local:8081/hub/api',
+      }
       # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
       class GennyAuthenticator(GitHubOAuthenticator):
@@ -57,7 +63,7 @@ singleuser:
     dynamic:
       storageClass: local-path  # k3s default storage class
   startTimeout: 300
-  cmd: null  # use image CMD
+  cmd: jupyterhub-singleuser
   extraEnv:
     OLLAMA_URL: "http://ollama.genny-shared.svc.cluster.local:11434"
     PLATFORMGEN_VERSION: "0.3.0"
