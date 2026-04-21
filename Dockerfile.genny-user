@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl build-essential \
     xvfb x11vnc xterm \
     novnc websockify \
+    matchbox-window-manager \
     python3-tk \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \

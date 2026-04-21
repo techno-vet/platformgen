@@ -11,21 +11,29 @@ export DISPLAY=${DISPLAY:-:1}
 Xvfb $DISPLAY -screen 0 1280x900x24 -ac &
 sleep 1
 
-# ── Launch Genny tkinter platform directly (no window manager / no terminal) ─
-# This is the only app in the VNC session — users cannot access a shell from here.
-# Shell access is provided by the Bash widget in the web UI instead.
-cd $GENNY_PLATFORM_DIR
-python -m genny.app &
+# ── Kiosk window manager (handles focus/clicks, no menus or terminal access) ─
+matchbox-window-manager -use_titlebar no &
+
+# ── Launch Genny tkinter platform (stdout->null suppresses unicode noise) ─────
+# Auto-restart loop: if genny crashes, it relaunches automatically
+(
+  while true; do
+    cd $GENNY_PLATFORM_DIR
+    python -m genny.app >/dev/null 2>&1
+    echo "Genny platform exited, restarting in 2s..."
+    sleep 2
+  done
+) &
 echo "Genny platform (tkinter) started on display $DISPLAY"
 
-# ── VNC server (listens on :5901, no password) ───────────────────────────────
-x11vnc -display $DISPLAY -forever -nopw -shared -rfbport 5901 -bg -o /tmp/x11vnc.log
+# ── VNC server (-reconnect keeps running after client disconnect) ────────────
+x11vnc -display $DISPLAY -forever -nopw -shared -rfbport 5901 -reconnect -bg -o /tmp/x11vnc.log
 echo "x11vnc started on :5901"
 
-# ── noVNC web client (proxies :5901 → HTTP :6080) ────────────────────────────
+# ── noVNC web client (proxies :5901 -> HTTP :6080) ───────────────────────────
 NOVNC_DIR=/usr/share/novnc
 websockify --web $NOVNC_DIR 6080 localhost:5901 &
-echo "noVNC started on :6080 (web: $NOVNC_DIR)"
+echo "noVNC started on :6080"
 
 # ── Genny FastAPI + Next.js UI ───────────────────────────────────────────────
 python -m uvicorn genny.web.app:app --host 0.0.0.0 --port 8889 &

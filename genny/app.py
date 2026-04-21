@@ -6,12 +6,43 @@ A self-building AI-powered desktop tool for Site Reliability Engineers.
 """
 
 import os
+import queue as _queue_module
 import socket
 import sys
 import threading
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk, messagebox
+
+# ── Python 3.13 tkinter thread-safety patch ──────────────────────────────────
+# In Python 3.13, tkinter.Misc.after() calls tk.createcommand() which raises
+# RuntimeError when called from a non-main thread.  All widgets use
+# self.after(0, callback) to post UI updates from background threads, so we
+# patch after() to route cross-thread calls through a queue that the main loop
+# drains every 50 ms.
+_ui_queue: _queue_module.Queue = _queue_module.Queue()
+_orig_after = tkinter.Misc.after if hasattr(tkinter, 'Misc') else None  # type: ignore
+
+def _safe_after(self, ms, func=None, *args):  # type: ignore
+    if func is not None and threading.current_thread() is not threading.main_thread():
+        _ui_queue.put((self, ms, func, args))
+        return 'thread-queued'
+    return _orig_after(self, ms, func, *args)  # type: ignore
+
+import tkinter as _tk_module  # noqa: E402
+_tk_module.Misc.after = _safe_after  # type: ignore
+
+
+def _drain_ui_queue(root: tk.Tk) -> None:
+    """Drain cross-thread after() calls scheduled via _safe_after."""
+    try:
+        while True:
+            widget, ms, func, call_args = _ui_queue.get_nowait()
+            _orig_after(widget, ms, func, *call_args)  # type: ignore
+    except _queue_module.Empty:
+        pass
+    root.after(50, _drain_ui_queue, root)
+# ─────────────────────────────────────────────────────────────────────────────
 
 from genny.ui.content_area import ContentArea
 from genny.ui.ask_genny import AskGennyPanel
@@ -830,6 +861,8 @@ def main():
     if _signal_existing_instance():
         return
     app = GennyPlatform()
+    # Start thread-safe after() queue drain (Python 3.13 compatibility)
+    _drain_ui_queue(app)
     # Show first-run wizard if GHE_TOKEN is not configured
     maybe_show_wizard(app)
     app.mainloop()
