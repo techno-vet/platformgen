@@ -12,6 +12,12 @@ hub:
       scope:
         - read:user
         - user:email
+      # Allow any GitHub user to log in (Stripe billing gates features, not auth)
+      allow_all: true
+    Authenticator:
+      admin_users:
+        - techno-vet
+      allow_all: true
     JupyterHub:
       authenticator_class: github
 
@@ -24,12 +30,14 @@ hub:
       # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
       class GennyAuthenticator(GitHubOAuthenticator):
+          allow_all = True
           async def pre_spawn_start(self, user, spawner):
               auth_state = await user.get_auth_state()
               if auth_state:
                   spawner.environment['GITHUB_USER'] = user.name
                   spawner.environment['GENNY_TIER'] = 'free'
       c.JupyterHub.authenticator_class = GennyAuthenticator
+      c.Authenticator.admin_users = {'techno-vet'}
 
 proxy:
   secretToken: "ae530f05583792733d764fbf9ae0af8c8899d5c54eaf2eefded6b29682932000"
