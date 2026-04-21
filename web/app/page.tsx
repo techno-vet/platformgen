@@ -29,7 +29,11 @@ export default function Home() {
 
   // Load widget manifest
   useEffect(() => {
-    fetch("/api/widgets")
+    // Use relative-to-page URL so it works both in dev and behind JupyterHub proxy
+    // e.g. /user/techno-vet/proxy/8889/api/widgets
+    const base = window.location.href.endsWith("/") ? window.location.href : window.location.href + "/";
+    const apiUrl = new URL("api/widgets", base).toString();
+    fetch(apiUrl)
       .then((r) => r.json())
       .then((d) => setWidgets(d.widgets || []))
       .catch(() => {});
@@ -37,8 +41,13 @@ export default function Home() {
 
   // Connect WebSocket
   useEffect(() => {
-    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${proto}//${window.location.host}/ws/chat`);
+    // Derive WS URL from current page location — handles JupyterHub proxy prefix automatically
+    // e.g. wss://platformgen.ai/user/techno-vet/proxy/8889/ws/chat
+    // Ensure trailing slash so relative URL resolves correctly
+    const base = window.location.href.endsWith("/") ? window.location.href : window.location.href + "/";
+    const wsUrl = new URL("ws/chat", base);
+    wsUrl.protocol = wsUrl.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(wsUrl.toString());
     wsRef.current = ws;
 
     ws.onopen = () => setConnected(true);
