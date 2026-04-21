@@ -63,7 +63,8 @@ singleuser:
     dynamic:
       storageClass: local-path  # k3s default storage class
   startTimeout: 300
-  cmd: jupyterhub-singleuser
+  cmd: "start-genny-user.sh"
+  defaultUrl: "/user/{username}/proxy/8889/"
   extraEnv:
     OLLAMA_URL: "http://ollama.genny-shared.svc.cluster.local:11434"
     PLATFORMGEN_VERSION: "0.3.0"

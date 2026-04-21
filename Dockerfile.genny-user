@@ -1,5 +1,6 @@
 # Genny User Pod Image — runs inside each JupyterHub user pod
-# Serves: FastAPI backend (port 8888) + Next.js frontend (static build)
+# Architecture: jupyterhub-singleuser on :8888 (required by JupyterHub)
+#               Genny FastAPI + Next.js UI on :8889 (accessible via /user/{name}/proxy/8889/)
 # Base: JupyterHub compatible (jovyan user, uid 1000)
 
 FROM quay.io/jupyter/base-notebook:hub-5.4.4
@@ -21,9 +22,13 @@ RUN pip install --no-cache-dir -r /tmp/requirements-web.txt
 COPY --chown=jovyan:users . /opt/genny-platform
 RUN pip install --no-cache-dir -e /opt/genny-platform
 
-# Build Next.js frontend
+# Build Next.js frontend (static export to /opt/genny-platform/web/out)
 WORKDIR /opt/genny-platform/web
 RUN npm ci --prefer-offline && npm run build
+
+# Startup script: runs Genny UI on :8889, then exec's jupyterhub-singleuser on :8888
+COPY scripts/start-genny-user.sh /usr/local/bin/start-genny-user.sh
+RUN chmod +x /usr/local/bin/start-genny-user.sh
 
 USER jovyan
 WORKDIR /home/jovyan
@@ -31,5 +36,5 @@ WORKDIR /home/jovyan
 ENV GENNY_PLATFORM_DIR=/opt/genny-platform
 ENV OLLAMA_URL=http://ollama.genny-shared.svc.cluster.local:11434
 
-# Start FastAPI server (JupyterHub expects port 8888 by default for singleuser)
-CMD ["python", "-m", "uvicorn", "genny.web.app:app", "--host", "0.0.0.0", "--port", "8888"]
+# JupyterHub overrides CMD with cmd: value — we set it in values.yaml
+CMD ["start-genny-user.sh"]
