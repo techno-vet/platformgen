@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║              AUGER AI SRE PLATFORM — SELF-RUNNING DEMO                     ║
-║              Brown Bag Showcase  |  Run: python3 demo_auger.py              ║
+║              PLATFORMGEN AI SRE PLATFORM — SELF-RUNNING DEMO                     ║
+║              Brown Bag Showcase  |  Run: python3 demo_genny.py              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Press ENTER to advance through each demo section, or run with --auto for
-fully automatic mode:  python3 demo_auger.py --auto
+fully automatic mode:  python3 demo_genny.py --auto
 """
 
 import sys
@@ -337,4 +337,4 @@ try:
 except Exception:
     pass
 
-print(c(DIM, "  Run with --auto for unattended mode: python3 demo_auger.py --auto\n"))
+print(c(DIM, "  Run with --auto for unattended mode: python3 demo_genny.py --auto\n"))

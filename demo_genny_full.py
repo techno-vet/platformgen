@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║           AUGER AI SRE PLATFORM — FULL WIDGET SHOWCASE DEMO                ║
+║           PLATFORMGEN AI SRE PLATFORM — FULL WIDGET SHOWCASE DEMO                ║
 ║                                                                              ║
 ║  Usage:                                                                      ║
-║    python3 demo_auger_full.py              # interactive (ENTER to advance) ║
-║    python3 demo_auger_full.py --auto       # fully automatic                ║
-║    python3 demo_auger_full.py --auto --fast  # fast auto (shorter pauses)   ║
-║    python3 demo_auger_full.py --offline    # polished demo — no .env needed ║
-║    python3 demo_auger_full.py --widget gchat  # demo one widget only        ║
+║    python3 demo_genny_full.py              # interactive (ENTER to advance) ║
+║    python3 demo_genny_full.py --auto       # fully automatic                ║
+║    python3 demo_genny_full.py --auto --fast  # fast auto (shorter pauses)   ║
+║    python3 demo_genny_full.py --offline    # polished demo — no .env needed ║
+║    python3 demo_genny_full.py --widget gchat  # demo one widget only        ║
 ║                                                                              ║
 ║  Requirements: Python 3.8+  (no pip installs needed for --offline mode)     ║
 ║    Optional: pip install pyyaml python-dotenv                                ║
@@ -1103,7 +1103,7 @@ def demo_widget_ai_manifests():
 # ══════════════════════════════════════════════════════════════════════════════
 def show_closing():
     print(f"\n{hr()}")
-    print(c(BD+CY, "  DEMO COMPLETE — Auger AI SRE Platform"))
+    print(c(BD+CY, "  DEMO COMPLETE — Genny AI SRE Platform"))
     print(hr())
     narrator(
         "That's all 26 sections covering every widget — including a live widget scaffold. "

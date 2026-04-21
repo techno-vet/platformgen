@@ -21,6 +21,13 @@ try:
 except ImportError:
     _GIT_WORKFLOW_AVAILABLE = False
 
+try:
+    from genny.agents.genny_runner import GennyRunner
+    _GENNY_RUNNER_AVAILABLE = True
+except ImportError:
+    _GENNY_RUNNER_AVAILABLE = False
+    GennyRunner = None
+
 
 class AskGennyPanel(tk.Frame):
     """Bottom panel for interacting with Genny AI agent."""
@@ -32,6 +39,8 @@ class AskGennyPanel(tk.Frame):
         self.content_area = content_area
         self._queue = queue.Queue()
         self._process = None
+        self._runner: object = None   # GennyRunner instance (lazy-init)
+        self._local_mode = False       # True = use local Ollama, False = use Copilot
         self._last_prompt = ''  # original user prompt, stored for post-response footer
         
         # Locate genny binary
@@ -119,6 +128,20 @@ class AskGennyPanel(tk.Frame):
         self._session_locked_secs = 0
         self._session_last_ts = None
         self._is_processing = False
+
+        # Local / Copilot mode toggle
+        self._mode_btn = tk.Button(
+            header,
+            text="🖥 Local",
+            command=self._toggle_mode,
+            bg='#3c3c3c',
+            fg='#a0a0a0',
+            font=('Segoe UI', 8),
+            relief=tk.FLAT,
+            cursor='hand2',
+            padx=6, pady=0,
+        )
+        self._mode_btn.pack(side=tk.RIGHT, padx=(0, 4))
 
         # Pop-out button (hidden when already in a popped-out window)
         if not self._is_popped_out:
@@ -324,6 +347,8 @@ I'm your AI SRE assistant. Ask me anything, or build your platform:
 - `create a log tail widget`
 
 Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Enter** to send.
+
+> 💡 **Tip:** Click **Local** in the header to switch to on-server Ollama mode — Genny runs locally with hands (bash, files, git).
 """
         self.response.append_markdown(welcome)
     
@@ -364,8 +389,8 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         self.response.append_markdown(f"### 💬 You\n{prompt}\n")
         self.response.append_raw('\n')
         
-        # Check if genny binary exists
-        if not Path(self._auger).exists():
+        # Check if genny binary exists (skip in local mode — we use smolagents)
+        if not self._local_mode and not Path(self._auger).exists():
             self.response.append_markdown(
                 f"**⚠️  Genny CLI not found at:** `{self._auger}`\n\n"
                 "Install it or update the path in `ui/ask_genny.py`.\n"
@@ -391,10 +416,15 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
             thread.start()
             return
 
-        # Route through host daemon so copilot runs as the host user (who owns
-        # ~/.copilot/session-state/). Falls back to local genny CLI if daemon is down.
-        thread = threading.Thread(target=self._run_via_ask_daemon, args=(prompt,), daemon=True)
-        thread.start()
+        # Route based on mode: local Ollama or Copilot
+        if self._local_mode:
+            thread = threading.Thread(target=self._run_via_genny_runner, args=(prompt,), daemon=True)
+            thread.start()
+        else:
+            # Route through host daemon so copilot runs as the host user (who owns
+            # ~/.copilot/session-state/). Falls back to local genny CLI if daemon is down.
+            thread = threading.Thread(target=self._run_via_ask_daemon, args=(prompt,), daemon=True)
+            thread.start()
     
     def _auger_env(self):
         """Build subprocess env: current env + tokens loaded from ~/.genny/.env."""
@@ -415,6 +445,33 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         # chat_history entries as 'panel' and the watcher skips them (no duplicate).
         env['AUGER_CHAT_SOURCE'] = 'panel'
         return env
+
+    def _toggle_mode(self):
+        """Toggle between Copilot mode and local Ollama/smolagents mode."""
+        self._local_mode = not self._local_mode
+        if self._local_mode:
+            self._mode_btn.config(
+                text="🖥 Local ✓", bg='#1e6e1e', fg='#4ec9b0',
+                activebackground='#1e6e1e',
+            )
+            self.response.append_markdown(
+                "\n*🖥 Switched to **Local mode** — responses come from Ollama (qwen2.5-coder:14b) "
+                "running on this server. Genny has hands: she can run bash, read/write files.*\n"
+            )
+        else:
+            self._mode_btn.config(
+                text="🖥 Local", bg='#3c3c3c', fg='#a0a0a0',
+                activebackground='#3c3c3c',
+            )
+            self.response.append_markdown(
+                "\n*☁️  Switched to **Copilot mode** — responses routed through GitHub Copilot.*\n"
+            )
+
+    def _get_runner(self) -> object:
+        """Lazy-init the GennyRunner."""
+        if self._runner is None and _GENNY_RUNNER_AVAILABLE:
+            self._runner = GennyRunner()
+        return self._runner
 
     def _run_via_ask_daemon(self, prompt: str):
         """Send prompt to host daemon /ask endpoint (runs copilot as host user).
@@ -508,6 +565,27 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         except Exception as e:
             self._queue.put(('error', str(e)))
     
+    def _run_via_genny_runner(self, prompt: str):
+        """Run prompt through local smolagents GennyRunner (Ollama backend)."""
+        runner = self._get_runner()
+        if runner is None:
+            self._queue.put(('error', 'smolagents not installed. Run: pip install smolagents litellm'))
+            return
+
+        def on_step(text: str):
+            self._queue.put(('line', f"*{text}*\n"))
+
+        def on_done(text: str):
+            self._save_to_history('assistant', text)
+            self._check_for_widget_code(text)
+            self._queue.put(('line', text + '\n'))
+            self._queue.put(('done', None))
+
+        def on_error(text: str):
+            self._queue.put(('error', text))
+
+        runner.run(prompt, on_step=on_step, on_done=on_done, on_error=on_error)
+
     def _check_for_widget_code(self, response):
         """Check if response contains a widget class definition, file path, or SQL."""
         # Look for Python code blocks with tk.Frame
