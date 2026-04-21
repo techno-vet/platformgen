@@ -64,7 +64,7 @@ singleuser:
       storageClass: local-path  # k3s default storage class
   startTimeout: 300
   cmd: "start-genny-user.sh"
-  defaultUrl: "/proxy/6080/vnc.html?autoconnect=true&resize=scale"
+  defaultUrl: "/proxy/8889/"
   extraEnv:
     OLLAMA_URL: "http://ollama.genny-shared.svc.cluster.local:11434"
     PLATFORMGEN_VERSION: "0.3.0"
