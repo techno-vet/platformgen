@@ -23,6 +23,15 @@ hub:
 
   cookieSecret: "ae530f05583792733d764fbf9ae0af8c8899d5c54eaf2eefded6b29682932000"
 
+  extraVolumes:
+    - name: pg-templates
+      configMap:
+        name: platformgen-hub-templates
+
+  extraVolumeMounts:
+    - name: pg-templates
+      mountPath: /etc/jupyterhub/templates
+
   extraConfig:
     platformgen: |
       # Route user pods into genny-users namespace
@@ -36,6 +45,8 @@ hub:
       c.KubeSpawner.environment = {
           'JUPYTERHUB_API_URL': 'http://hub.genny-hub.svc.cluster.local:8081/hub/api',
       }
+      # Custom PlatformGen templates
+      c.JupyterHub.template_paths = ['/etc/jupyterhub/templates']
       # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
       import urllib.parse
