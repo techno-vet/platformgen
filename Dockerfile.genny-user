@@ -1,15 +1,20 @@
 # Genny User Pod Image — runs inside each JupyterHub user pod
 # Architecture: jupyterhub-singleuser on :8888 (required by JupyterHub)
 #               Genny FastAPI + Next.js UI on :8889 (accessible via /user/{name}/proxy/8889/)
+#               noVNC desktop on :6080 (accessible via /user/{name}/proxy/6080/)
 # Base: JupyterHub compatible (jovyan user, uid 1000)
 
 FROM quay.io/jupyter/base-notebook:hub-5.4.4
 
 USER root
 
-# System deps
+# System deps + VNC/desktop stack
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl build-essential \
+    xvfb x11vnc xterm \
+    openbox dbus-x11 \
+    novnc websockify \
+    python3-tk \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -26,7 +31,7 @@ RUN pip install --no-cache-dir -e /opt/genny-platform
 WORKDIR /opt/genny-platform/web
 RUN npm ci --prefer-offline && npm run build
 
-# Startup script: runs Genny UI on :8889, then exec's jupyterhub-singleuser on :8888
+# Startup script: runs Genny UI on :8889, noVNC on :6080, then exec's jupyterhub-singleuser
 COPY scripts/start-genny-user.sh /usr/local/bin/start-genny-user.sh
 RUN chmod +x /usr/local/bin/start-genny-user.sh
 
@@ -35,6 +40,7 @@ WORKDIR /home/jovyan
 
 ENV GENNY_PLATFORM_DIR=/opt/genny-platform
 ENV OLLAMA_URL=http://ollama.genny-shared.svc.cluster.local:11434
+ENV DISPLAY=:1
 
 # JupyterHub overrides CMD with cmd: value — we set it in values.yaml
 CMD ["start-genny-user.sh"]

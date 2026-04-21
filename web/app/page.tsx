@@ -134,6 +134,19 @@ export default function Home() {
             {connected ? "● connected" : "● disconnected"}
           </span>
           {thinking && <span className="text-yellow-400 text-xs animate-pulse">⏳ Genny is thinking...</span>}
+          <div className="ml-auto">
+            <button
+              onClick={() => {
+                // Open noVNC desktop in new tab — path derived from current proxy prefix
+                const base = window.location.href.replace(/\/proxy\/\d+\/.*$/, "");
+                window.open(`${base}/proxy/6080/vnc.html?autoconnect=true&resize=scale`, "_blank");
+              }}
+              className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded border border-gray-600"
+              title="Open Linux desktop (runs tkinter apps)"
+            >
+              🖥️ Desktop
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
