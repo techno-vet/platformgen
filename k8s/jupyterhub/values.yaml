@@ -47,6 +47,8 @@ hub:
       }
       # Custom PlatformGen templates
       c.JupyterHub.template_paths = ['/etc/jupyterhub/templates']
+      # Enable auth_state so we can pass the GitHub OAuth token to pods
+      c.Authenticator.enable_auth_state = True
       # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
       import urllib.parse
@@ -57,6 +59,11 @@ hub:
               if auth_state:
                   spawner.environment['GITHUB_USER'] = user.name
                   spawner.environment['GENNY_TIER'] = 'free'
+                  # Pass GitHub OAuth token so genny can use gh/copilot CLI
+                  token = auth_state.get('access_token', '')
+                  if token:
+                      spawner.environment['GHE_TOKEN'] = token
+                      spawner.environment['GH_TOKEN'] = token
               # Redirect straight to noVNC desktop on spawn — path must include
               # the full proxy route so the WebSocket routes through JupyterHub correctly
               ws_path = urllib.parse.quote(f"user/{user.name}/proxy/6080/websockify")

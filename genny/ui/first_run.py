@@ -33,6 +33,10 @@ SUBTLE  = "#808080"
 
 def is_first_run() -> bool:
     """Return True if GHE_TOKEN is not yet configured."""
+    # In JupyterHub-spawned pods the user is already authenticated via GitHub
+    # OAuth — no need for the setup wizard regardless of token presence.
+    if os.environ.get("JUPYTERHUB_USER", "").strip():
+        return False
     # Check environment first (passed via docker-run.sh -e GH_TOKEN)
     for key in ("GH_TOKEN", "GHE_TOKEN", "GITHUB_TOKEN", "COPILOT_GITHUB_TOKEN"):
         if os.environ.get(key, "").strip():
