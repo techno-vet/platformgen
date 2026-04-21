@@ -8,7 +8,9 @@ export GENNY_PLATFORM_DIR=${GENNY_PLATFORM_DIR:-/opt/genny-platform}
 export DISPLAY=${DISPLAY:-:1}
 
 # ── Virtual framebuffer (headless X display) ─────────────────────────────────
-Xvfb $DISPLAY -screen 0 1280x900x24 -ac &
+# 1920x1080 ensures the 1400x920 genny window fits without clipping (clipped
+# windows cause click-coordinate misalignment in noVNC)
+Xvfb $DISPLAY -screen 0 1920x1080x24 -ac &
 sleep 1
 
 # ── Kiosk window manager (handles focus/clicks, no menus or terminal access) ─
