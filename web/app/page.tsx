@@ -16,29 +16,21 @@ interface Widget {
   in_progress: boolean;
 }
 
-// Anchor-based desktop link avoids popup blockers.
-// Computes href client-side by stripping current proxy prefix and switching to :6080.
-// The noVNC `path` param must be set to the full proxy path so the WebSocket
-// goes through JupyterHub's proxy rather than hitting / directly.
+// Desktop button — computes VNC URL in onClick (direct user gesture = no popup blocker)
 function DesktopLink() {
-  const [href, setHref] = useState("#");
-  useEffect(() => {
-    // e.g. /user/techno-vet/proxy/8889/ → base = /user/techno-vet
-    const proxyBase = window.location.pathname.replace(/\/proxy\/\d+\/?.*$/, "");
-    const wsPath = `${proxyBase}/proxy/6080/websockify`;
-    const origin = window.location.origin;
-    setHref(`${origin}${proxyBase}/proxy/6080/vnc.html?autoconnect=true&resize=scale&path=${encodeURIComponent(wsPath.replace(/^\//, ""))}`);
-  }, []);
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded border border-gray-600 no-underline"
+    <button
+      onClick={() => {
+        const proxyBase = window.location.pathname.replace(/\/proxy\/\d+\/?.*$/, "");
+        const wsPath = encodeURIComponent(`user${proxyBase}/proxy/6080/websockify`);
+        const url = `${window.location.origin}${proxyBase}/proxy/6080/vnc.html?autoconnect=true&resize=scale&path=${wsPath}`;
+        window.open(url, "_blank");
+      }}
+      className="text-xs px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded border border-gray-600"
       title="Open Genny desktop (tkinter platform)"
     >
       🖥️ Desktop
-    </a>
+    </button>
   );
 }
 

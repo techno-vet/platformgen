@@ -38,6 +38,7 @@ hub:
       }
       # Inject GENNY_TIER (billing webhook updates this in Phase 3)
       from oauthenticator.github import GitHubOAuthenticator
+      import urllib.parse
       class GennyAuthenticator(GitHubOAuthenticator):
           allow_all = True
           async def pre_spawn_start(self, user, spawner):
@@ -45,6 +46,10 @@ hub:
               if auth_state:
                   spawner.environment['GITHUB_USER'] = user.name
                   spawner.environment['GENNY_TIER'] = 'free'
+              # Redirect straight to noVNC desktop on spawn — path must include
+              # the full proxy route so the WebSocket routes through JupyterHub correctly
+              ws_path = urllib.parse.quote(f"user/{user.name}/proxy/6080/websockify")
+              spawner.default_url = f"/proxy/6080/vnc.html?autoconnect=true&resize=scale&path={ws_path}"
       c.JupyterHub.authenticator_class = GennyAuthenticator
       c.Authenticator.admin_users = {'techno-vet'}
 
