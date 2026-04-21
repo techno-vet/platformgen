@@ -21,16 +21,15 @@ from tkinter import ttk, messagebox
 # patch after() to route cross-thread calls through a queue that the main loop
 # drains every 50 ms.
 _ui_queue: _queue_module.Queue = _queue_module.Queue()
-_orig_after = tkinter.Misc.after if hasattr(tkinter, 'Misc') else None  # type: ignore
+_orig_after = tk.Misc.after
 
 def _safe_after(self, ms, func=None, *args):  # type: ignore
     if func is not None and threading.current_thread() is not threading.main_thread():
         _ui_queue.put((self, ms, func, args))
         return 'thread-queued'
-    return _orig_after(self, ms, func, *args)  # type: ignore
+    return _orig_after(self, ms, func, *args)
 
-import tkinter as _tk_module  # noqa: E402
-_tk_module.Misc.after = _safe_after  # type: ignore
+tk.Misc.after = _safe_after  # type: ignore
 
 
 def _drain_ui_queue(root: tk.Tk) -> None:

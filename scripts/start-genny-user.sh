@@ -26,8 +26,14 @@ matchbox-window-manager -use_titlebar no &
 ) &
 echo "Genny platform (tkinter) started on display $DISPLAY"
 
-# ── VNC server (-reconnect keeps running after client disconnect) ────────────
-x11vnc -display $DISPLAY -forever -nopw -shared -rfbport 5901 -reconnect -bg -o /tmp/x11vnc.log
+# ── VNC server — auto-restart loop; no -bg so it stays in the process tree ────
+(
+  while true; do
+    x11vnc -display $DISPLAY -forever -nopw -shared -rfbport 5901 -o /tmp/x11vnc.log 2>&1
+    echo "x11vnc exited, restarting in 2s..."
+    sleep 2
+  done
+) &
 echo "x11vnc started on :5901"
 
 # ── noVNC web client (proxies :5901 -> HTTP :6080) ───────────────────────────
