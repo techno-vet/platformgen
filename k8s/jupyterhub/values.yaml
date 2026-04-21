@@ -55,9 +55,9 @@ proxy:
 
 singleuser:
   image:
-    name: quay.io/jupyter/scipy-notebook
-    tag: hub-5.4.4
-    pullPolicy: IfNotPresent
+    name: ghcr.io/techno-vet/genny-user
+    tag: latest
+    pullPolicy: Always
   storage:
     capacity: 1Gi
     dynamic:
