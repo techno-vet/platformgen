@@ -480,7 +480,7 @@ class GennyGroup(click.Group):
         return super().invoke(ctx)
 
 
-@click.command(cls=AugerGroup)
+@click.command(cls=GennyGroup)
 @click.version_option(version="0.1.0")
 @click.pass_context
 def main(ctx):
@@ -497,7 +497,7 @@ def main(ctx):
     and integrations with DataDog, GitHub, ServiceNow, and more.
     """
     # This gets called by Click's framework
-    # The actual routing is handled in AugerGroup.invoke()
+    # The actual routing is handled in GennyGroup.invoke()
     pass
 
 
@@ -571,7 +571,7 @@ def init(token, config_dir, datadog_api_key, datadog_app_key):
     click.echo("  3. Ask: 'Help me set up DataDog integration'")
     
     if not datadog_api_key:
-        click.echo("\n💡 Tip: You can configure DataDog later by asking Auger!")
+        click.echo("\n💡 Tip: You can configure DataDog later by asking Genny!")
 
 
 @main.command()
@@ -621,7 +621,7 @@ def start(port, display, debug, config_dir):
         click.echo("  pip install -e .")
         sys.exit(1)
     except Exception as e:
-        click.echo(f"❌ Error starting Auger: {e}")
+        click.echo(f"❌ Error starting Genny: {e}")
         if debug:
             import traceback
             traceback.print_exc()

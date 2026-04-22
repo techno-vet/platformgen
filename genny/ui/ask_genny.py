@@ -902,7 +902,7 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         self.response.append_markdown(
             "---\n"
             "### [INIT] First-Run Initialization\n"
-            "*Auger is reading its origin documentation and behavioral guidelines...*\n"
+            "*Genny is reading its origin documentation and behavioral guidelines...*\n"
         )
         self.response.append_raw("\n")
 
@@ -937,7 +937,7 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         self.response.append_markdown(
             "---\n"
             "### [UPDATE] Behavior Guidelines Update\n"
-            "*Auger is loading updated behavioral guidelines...*\n"
+            "*Genny is loading updated behavioral guidelines...*\n"
         )
         self.response.append_raw("\n")
         self._save_to_history("system", "[Behavior update: reading AUGER_BEHAVIOR.md]")
@@ -956,7 +956,7 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         self._PURPOSE_FLAG.write_text(datetime.now().isoformat(), encoding="utf-8")
         self._BEHAVIOR_FLAG.write_text(datetime.now().isoformat(), encoding="utf-8")
         self.response.append_markdown(
-            "\n[OK] *Auger has been initialized. This will not run again on this installation.*\n---\n"
+            "\n[OK] *Genny has been initialized. This will not run again on this installation.*\n---\n"
         )
 
     def _on_behavior_init_complete(self):
@@ -1323,7 +1323,7 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         '/rebuild':  'rebuild_auger',
     }
 
-    _SLASH_HELP = """*Auger Slash Commands* (must be the first character of your message)
+    _SLASH_HELP = """*Genny Slash Commands* (must be the first character of your message)
 
 `/reinit`   — Clear the pinned Copilot session and start fresh
 `/restart`  — Restart the Genny container (same as relaunch)
