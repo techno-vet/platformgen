@@ -63,8 +63,16 @@ class AskGennyPanel(tk.Frame):
         self._local_mode = False       # True = use local Ollama, False = use Copilot
         self._last_prompt = ''  # original user prompt, stored for post-response footer
         
-        # Locate genny binary
-        self._genny = shutil.which("genny") or str(Path.home() / ".local/bin/genny")
+        # Locate copilot CLI wrapper (the terminal 'genny' command, NOT the Python package entry point)
+        # Priority: /usr/local/bin/genny (baked into image) > ~/.local/bin/genny > PATH fallback
+        _copilot_candidates = [
+            "/usr/local/bin/genny",
+            str(Path.home() / ".local" / "bin" / "genny"),
+        ]
+        self._genny = next(
+            (p for p in _copilot_candidates if Path(p).exists()),
+            shutil.which("genny") or "/usr/local/bin/genny"
+        )
         
         # History persistence
         self._history_dir = Path.home() / ".genny" / "logs" / "chat_history"
@@ -463,7 +471,7 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
                 break
         # Tell cli.py this subprocess was spawned by the panel — so it tags
         # chat_history entries as 'panel' and the watcher skips them (no duplicate).
-        env['AUGER_CHAT_SOURCE'] = 'panel'
+        env['GENNY_CHAT_SOURCE'] = 'panel'
         return env
 
     def _toggle_mode(self):

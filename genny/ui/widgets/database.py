@@ -1150,7 +1150,7 @@ class DatabaseWidget(tk.Frame):
                 "PATH":                 os.environ.get("PATH", "/usr/local/bin:/usr/bin:/bin"),
                 "USER":                 os.environ.get("USER", ""),
                 "TERM":                 "xterm-256color",
-                "AUGER_CHAT_SOURCE":    "database_aql",
+                "GENNY_CHAT_SOURCE":    "database_aql",
             }
             if token:
                 env["COPILOT_GITHUB_TOKEN"] = token

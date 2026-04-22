@@ -277,12 +277,12 @@ def run_copilot_ask(prompt_text=None):
         session_args = ["--resume", session_id] if session_id else ["--continue"]
 
         # Record prompt in shared chat history.
-        # Source priority: AUGER_CHAT_SOURCE env var (set by panel subprocess) >
+        # Source priority: GENNY_CHAT_SOURCE env var (set by panel subprocess) >
         # Docker detection ('container') > host terminal ('terminal').
         # Watcher skips 'panel' and 'container' — only shows 'terminal' entries.
         import time as _time, json as _json, re as _re
         _in_docker = Path('/.dockerenv').exists()
-        _source = os.environ.get('AUGER_CHAT_SOURCE') or ('container' if _in_docker else 'terminal')
+        _source = os.environ.get('GENNY_CHAT_SOURCE') or ('container' if _in_docker else 'terminal')
         chat_history = Path.home() / '.genny' / 'chat_history.jsonl'
         chat_history.parent.mkdir(parents=True, exist_ok=True)
         try:
