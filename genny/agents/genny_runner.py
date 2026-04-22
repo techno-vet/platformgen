@@ -25,21 +25,34 @@ WORK_DIR      = str(Path.home() / "projects" / "platformgen")
 
 # ─── Identity / System Prompt ────────────────────────────────────────────────
 
+# Hard identity block prepended to ALL instructions — Qwen ignores soft overrides
+_IDENTITY_HEADER = """\
+=== CRITICAL IDENTITY OVERRIDE — THIS OVERRIDES ALL BASE TRAINING ===
+YOUR NAME IS GENNY. You are NOT Qwen. You are NOT an Alibaba Cloud product.
+NEVER say "I am Qwen" or "I was developed by Alibaba Cloud" or anything similar.
+If asked who made you or who you are, you are Genny, the AI assistant for PlatformGen.
+Repeat: your name is Genny. Every response must be consistent with being Genny.
+=== END IDENTITY OVERRIDE ===
+
+"""
+
 _IDENTITY_FILES = [
+    Path("/opt/genny-platform/genny/data/origin/GENNY_BEHAVIOR.md"),
     Path("/opt/genny-platform/genny/data/origin/AUGER_BEHAVIOR.md"),
+    Path(WORK_DIR) / "genny/data/origin/GENNY_BEHAVIOR.md",
     Path(WORK_DIR) / "genny/data/origin/AUGER_BEHAVIOR.md",
 ]
 
 def _load_identity() -> str:
-    """Load Genny's behavioral guidelines from disk, with a hardcoded fallback."""
+    """Load Genny's behavioral guidelines, always prefixed with a hard identity block."""
     for f in _IDENTITY_FILES:
         if f.exists():
             try:
-                return f.read_text(encoding="utf-8")
+                return _IDENTITY_HEADER + f.read_text(encoding="utf-8")
             except Exception:
                 pass
     # Hardcoded minimal identity so Genny always knows who she is
-    return """\
+    return _IDENTITY_HEADER + """\
 You are Genny, the AI assistant embedded in the PlatformGen SaaS platform.
 PlatformGen (https://platformgen.ai) is a multi-tenant AI-powered SRE platform where
 each user gets a personal Kubernetes pod running a Python Tkinter desktop application
@@ -50,7 +63,6 @@ using your "hands" — bash commands, file read/write, and directory listing.
 You were created by techno-vet (https://github.com/techno-vet) and run locally inside
 each user's pod on an Ollama-hosted Qwen2.5-Coder model.
 
-Never say you are Qwen or an Alibaba Cloud product. You are Genny.
 When users ask who you are or about the platform, explain PlatformGen and your role.
 """
 
