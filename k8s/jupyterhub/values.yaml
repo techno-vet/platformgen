@@ -75,6 +75,13 @@ proxy:
   secretToken: "ae530f05583792733d764fbf9ae0af8c8899d5c54eaf2eefded6b29682932000"
   service:
     type: ClusterIP
+  # Increase WebSocket timeout so noVNC doesn't get dropped (default is 300s)
+  chp:
+    extraCommandLineFlags:
+      - "--no-x-forward"
+      - "--no-prepend-path"
+    extraEnv:
+      CONFIGPROXY_WEBSOCKET_TIMEOUT: "3600"
 
 singleuser:
   image:

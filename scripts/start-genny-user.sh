@@ -43,7 +43,8 @@ echo "x11vnc started on :5901"
 
 # ── noVNC web client (proxies :5901 -> HTTP :6080) ───────────────────────────
 NOVNC_DIR=/usr/share/novnc
-websockify --web $NOVNC_DIR 6080 localhost:5901 &
+# --heartbeat 30: send WebSocket ping every 30s to prevent proxy idle timeout
+websockify --web $NOVNC_DIR --heartbeat 30 6080 localhost:5901 &
 echo "noVNC started on :6080"
 
 # ── Genny FastAPI + Next.js UI ───────────────────────────────────────────────

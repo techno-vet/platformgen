@@ -390,9 +390,9 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         self.response.append_raw('\n')
         
         # Check if genny binary exists (skip in local mode — we use smolagents)
-        if not self._local_mode and not Path(self._auger).exists():
+        if not self._local_mode and not Path(self._genny).exists():
             self.response.append_markdown(
-                f"**⚠️  Genny CLI not found at:** `{self._auger}`\n\n"
+                f"**⚠️  Genny CLI not found at:** `{self._genny}`\n\n"
                 "Install it or update the path in `ui/ask_genny.py`.\n"
             )
             return
@@ -531,7 +531,7 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
         try:
             # Start process with token env vars from ~/.genny/.env
             self._process = subprocess.Popen(
-                [self._auger, prompt],
+                [self._genny, prompt],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
