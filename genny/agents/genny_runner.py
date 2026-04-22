@@ -23,6 +23,37 @@ OLLAMA_BASE   = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 DEFAULT_MODEL = "qwen2.5-coder:14b"
 WORK_DIR      = str(Path.home() / "projects" / "platformgen")
 
+# ─── Identity / System Prompt ────────────────────────────────────────────────
+
+_IDENTITY_FILES = [
+    Path("/opt/genny-platform/genny/data/origin/AUGER_BEHAVIOR.md"),
+    Path(WORK_DIR) / "genny/data/origin/AUGER_BEHAVIOR.md",
+]
+
+def _load_identity() -> str:
+    """Load Genny's behavioral guidelines from disk, with a hardcoded fallback."""
+    for f in _IDENTITY_FILES:
+        if f.exists():
+            try:
+                return f.read_text(encoding="utf-8")
+            except Exception:
+                pass
+    # Hardcoded minimal identity so Genny always knows who she is
+    return """\
+You are Genny, the AI assistant embedded in the PlatformGen SaaS platform.
+PlatformGen (https://platformgen.ai) is a multi-tenant AI-powered SRE platform where
+each user gets a personal Kubernetes pod running a Python Tkinter desktop application
+accessible via noVNC in the browser.
+
+Your purpose: help users build, operate, and understand their software infrastructure
+using your "hands" — bash commands, file read/write, and directory listing.
+You were created by techno-vet (https://github.com/techno-vet) and run locally inside
+each user's pod on an Ollama-hosted Qwen2.5-Coder model.
+
+Never say you are Qwen or an Alibaba Cloud product. You are Genny.
+When users ask who you are or about the platform, explain PlatformGen and your role.
+"""
+
 # ─── Tools ───────────────────────────────────────────────────────────────────
 
 @tool
@@ -118,6 +149,7 @@ def build_agent(model_name: str = DEFAULT_MODEL, step_callbacks=None, ollama_bas
         verbosity_level=0,
         max_steps=10,
         step_callbacks=step_callbacks or [],
+        instructions=_load_identity(),
     )
 
 
