@@ -9,11 +9,31 @@ import shutil
 import re
 import json
 import os
+import unicodedata
 from pathlib import Path
 from datetime import datetime, timedelta
 from dotenv import dotenv_values
 
 from .markdown_widget import MarkdownWidget
+
+# Characters Xft/tkinter cannot render show as \ufffd — strip them at source.
+# Replace common agent-output emoji with ASCII, then drop anything non-renderable.
+_EMOJI_SUBS = [
+    ("⚗", "[->]"), ("🔧", "[tool]"), ("🔍", "[search]"), ("📝", "[note]"),
+    ("✅", "[ok]"), ("❌", "[err]"), ("⚠", "[warn]"), ("💡", "[tip]"),
+    ("🤖", "[bot]"), ("📁", "[dir]"), ("📄", "[file]"), ("\ufffd", ""),
+]
+
+def _sanitize(text: str) -> str:
+    """Replace unrenderable characters with ASCII equivalents."""
+    for emoji, replacement in _EMOJI_SUBS:
+        text = text.replace(emoji, replacement)
+    # Strip any remaining characters outside the Latin/Greek/Cyrillic/CJK BMP range
+    # that Xft typically cannot render (surrogate pairs, private use, etc.)
+    return "".join(
+        c if unicodedata.category(c) not in ("Cs", "Co") and ord(c) < 0xFFFD else ""
+        for c in text
+    )
 
 try:
     from genny.tools.git_workflow import handle_widget_change, get_genny_repo, make_branch_name
@@ -573,12 +593,12 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
             return
 
         def on_step(text: str):
-            self._queue.put(('line', f"*{text}*\n"))
+            self._queue.put(('line', f"*{_sanitize(text)}*\n"))
 
         def on_done(text: str):
             self._save_to_history('assistant', text)
             self._check_for_widget_code(text)
-            self._queue.put(('line', text + '\n'))
+            self._queue.put(('line', _sanitize(text) + '\n'))
             self._queue.put(('done', None))
 
         def on_error(text: str):
