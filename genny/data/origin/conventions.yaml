@@ -1,5 +1,5 @@
-# Auger Platform — Team Conventions
-# Auger auto-applies these when creating branches, commits, PRs.
+# Genny Platform — Team Conventions
+# Genny auto-applies these when creating branches, commits, PRs.
 conventions:
   - id: feature-branch-naming
     name: Feature branch naming
@@ -19,7 +19,7 @@ conventions:
     category: commit
     pattern: "{type}: {short_description}"
     description: >
-      Use conventional commit prefixes. Auger will suggest the correct type.
+      Use conventional commit prefixes. Genny will suggest the correct type.
       Types: feat, fix, chore, docs, refactor, hotfix
     examples:
       - "feat: add rules/conventions widget"
@@ -31,7 +31,7 @@ conventions:
     pattern: "{PROJECT}-{major}.{minor}.{patch}.{build}-{ENV}"
     description: >
       Release branches follow strict naming for deployment tracking.
-      Auger validates this pattern before allowing release branch creation.
+      Genny validates this pattern before allowing release branch creation.
     examples:
       - "SRE-1.2.3.4-PROD"
       - "ASSIST-2.0.1.0-UAT"
@@ -41,7 +41,7 @@ conventions:
     category: workflow
     pattern: "write file → verify live in app → commit"
     description: >
-      Widget files (auger/ui/widgets/*.py) hot-reload within ~1 second while the
+      Widget files (genny/ui/widgets/*.py) hot-reload within ~1 second while the
       app is running. Always write the file change first, wait for the user to
       visually confirm it looks correct in the running app, THEN commit.
       Never commit a widget change without a visual sign-off first.
@@ -57,7 +57,7 @@ conventions:
     description: >
       Every widget class must define a module-level make_icon(size, color) function
       and assign it as WIDGET_ICON_FUNC = staticmethod(make_icon). This PIL function
-      renders the tab icon shown in the Auger app bar. The icon should be SRE-relevant
+      renders the tab icon shown in the Genny app bar. The icon should be SRE-relevant
       and visually distinct. It is called with size=18 for tabs.
       New AI-generated widgets must also include make_icon.
     examples:

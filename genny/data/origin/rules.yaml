@@ -1,5 +1,5 @@
-# Auger Platform — Team Rules
-# enforcement: warn (Auger warns user), block (Auger refuses), info (Auger mentions)
+# Genny Platform — Team Rules
+# enforcement: warn (Genny warns user), block (Genny refuses), info (Genny mentions)
 rules:
   - id: flux-config-always-two-approvals
     name: assist-prod-flux-config always requires 2 approvals
@@ -33,10 +33,10 @@ rules:
     scope: platform
     enforcement: warn
     rule: >
-      All Auger platform git operations push to the enterprise GitHub instance at
+      All Genny platform git operations push to the enterprise GitHub instance at
       github.helix.gsa.gov, org: assist. Repos live at
       https://github.helix.gsa.gov/assist/<repo>.git.
-      Always push via HTTPS using the GHE_TOKEN from ~/.auger/.env — never SSH
+      Always push via HTTPS using the GHE_TOKEN from ~/.genny/.env — never SSH
       (SSH is read-only / blocked inside the container).
       The github.com token (GH_TOKEN) is only for Copilot API access — it cannot
       push to enterprise repos.
@@ -61,7 +61,7 @@ rules:
     enforcement: info
     scope: global
     rule: >
-      For Auger reporting, audits, and recommendations, treat the data-team/data-tools
+      For Genny reporting, audits, and recommendations, treat the data-team/data-tools
       repo scope as the 12 assist org repos that use DATA_1.x.x.x release branches,
       EXCLUDING assist-data-api-service-automated-test, PLUS assist-jupyterhub as
       an explicit anomaly/include. Do NOT exclude assist-jupyterhub just because

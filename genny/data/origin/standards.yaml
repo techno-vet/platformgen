@@ -1,5 +1,5 @@
-# Auger Platform — Team Standards
-# Reference documents Auger cites when answering questions.
+# Genny Platform — Team Standards
+# Reference documents Genny cites when answering questions.
 standards:
   - id: flux-deployment-process
     name: Flux Deployment Process
@@ -26,6 +26,6 @@ standards:
     name: SLO Targets
     description: Service Level Objectives for platform services
     content: >
-      Auger Platform: 99.5% availability (planned maintenance excluded)
+      Genny Platform: 99.5% availability (planned maintenance excluded)
       API response time: p95 < 2s, p99 < 5s
       Flux reconciliation: < 5 min after merge

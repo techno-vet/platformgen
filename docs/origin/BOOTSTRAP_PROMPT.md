@@ -1,10 +1,10 @@
-# Auger SRE Platform — Bootstrap Prompt
+# Genny Platform — Bootstrap Prompt
 
-This is the original prompt that was used to create the Auger SRE Platform from scratch using AI (GitHub Copilot via the `auger` CLI tool). The entire platform was built 100% through AI-assisted development — no code was written manually.
+This is the original prompt that was used to create the Genny Platform from scratch using AI (GitHub Copilot via the `genny` CLI tool). The entire platform was built 100% through AI-assisted development — no code was written manually.
 
 **Date**: 2026-02-27  
 **Model**: GitHub Copilot (claude-sonnet-4.6)  
-**Tool**: `auger` CLI  
+**Tool**: `genny` CLI  
 
 ---
 
@@ -12,7 +12,7 @@ This is the original prompt that was used to create the Auger SRE Platform from 
 
 ---
 
-Build a complete Python Tkinter desktop application called the **Auger SRE Platform** — a self-building AI-powered tool for Site Reliability Engineers. The app is designed so an embedded AI agent (invoked via a CLI tool named `auger`) can generate new SRE widgets dynamically at runtime. The architecture must be modular, hot-reloadable, and dark-themed.
+Build a complete Python Tkinter desktop application called the **Genny Platform** — a self-building AI-powered tool for Site Reliability Engineers. The app is designed so an embedded AI agent (invoked via a CLI tool named `genny`) can generate new SRE widgets dynamically at runtime. The architecture must be modular, hot-reloadable, and dark-themed.
 
 ---
 
@@ -21,7 +21,7 @@ Build a complete Python Tkinter desktop application called the **Auger SRE Platf
 Create the following directory and file layout:
 
 ```
-auger-sre/
+genny-platform/
  app.py                        # Main entry point
  requirements.txt
  config.yaml                   # Platform config (environments, thresholds, etc.)
@@ -34,7 +34,7 @@ auger-sre/
  ui/
     __init__.py
     content_area.py           # Tabbed content area with hot-reload
-    ask_auger.py              # Bottom AI agent panel (runs `auger` CLI)
+    ask_genny.py              # Bottom AI agent panel (runs `genny` CLI)
     hot_reload.py             # Watches ui/widgets/ every 1s for changes
     markdown_widget.py        # Dark-themed Markdown-rendering Text widget
     widgets/
@@ -49,10 +49,10 @@ auger-sre/
 
 ### 1. `app.py` — Main Application
 
-- Subclass `tk.Tk`, title: `" Auger — AI SRE Platform"`
+- Subclass `tk.Tk`, title: `" Genny — AI SRE Platform"`
 - Window size: 1400×920, min 900×650
 - Dark theme: bg `#1e1e1e`, use `ttk.Style` with `clam` theme
-- **Vertical PanedWindow**: top = `ContentArea` (60% height), bottom = `AskAugerPanel` (40%)
+- **Vertical PanedWindow**: top = `ContentArea` (60% height), bottom = `AskGennyPanel` (40%)
 - **Menu bar** with these menus:
   - **File**: New Session (`Ctrl+N`), Clear Chat (`Ctrl+L`), separator, Exit (`Ctrl+Q`)
   - **View**: Tabbed / Stacked / Grid (stubs for layout switching)
@@ -60,10 +60,10 @@ auger-sre/
     - "Manage Widgets…" — shows messagebox with usage examples
     - separator
     - " API Key Configurator" — opens `APIConfigWidget` tab
-    - " Service Health Monitor" — sets a sample prompt in AskAuger
-    - " Alert Manager" — sets a sample prompt in AskAuger
-    - " Runbook Widget" — sets a sample prompt in AskAuger
-  - **Help**: "What can Auger do?" (sets sample prompt), About
+    - " Service Health Monitor" — sets a sample prompt in AskGenny
+    - " Alert Manager" — sets a sample prompt in AskGenny
+    - " Runbook Widget" — sets a sample prompt in AskGenny
+  - **Help**: "What can Genny do?" (sets sample prompt), About
 - **CRITICAL**: Menu items that open widget tabs must NOT import the widget class at startup. They must do a live lookup from `sys.modules` every time they are clicked, like this:
   ```python
   command=lambda: self.content.add_widget_tab(
@@ -80,7 +80,7 @@ auger-sre/
 
 Subclass `ttk.Notebook`. Key methods:
 
-- `_add_home_tab()`: adds a Home tab with the app title `" Auger SRE Platform"`, subtitle `"Ask Auger below to build your platform"`, and a hint like `'Try: "create a service health monitor widget"'`
+- `_add_home_tab()`: adds a Home tab with the app title `" Genny Platform"`, subtitle `"Ask Genny below to build your platform"`, and a hint like `'Try: "create a service health monitor widget"'`
 - `add_widget_tab(name, widget_class, **kwargs)`: instantiate `widget_class(frame)`, add as new tab, select it. On error show a red error label in the tab.
 - `load_widget_from_code(code, name=None)`: parse the first `class Xxx(` from generated Python code, save to `ui/widgets/<name>.py` — the hot reloader picks it up automatically and creates the tab.
 - `hot_reload_update(path, module)`: called by HotReloader. Find the `tk.Frame` subclass in the module. If a tab with that file stem already exists, replace its contents in-place (destroy children, re-instantiate). Flash the tab title with `" "` prefix for 1.2 seconds. If it's a new file, open as new tab.
@@ -109,24 +109,24 @@ Subclass `tk.Text`. Dark theme bg `#1a1a2e`, fg `#e0e0e0`. Renders:
 - Methods: `append_markdown(text)`, `append_raw(text, tag="")`, `clear()`, `see(END)`
 - Always re-enables then re-disables state around writes
 
-### 5. `ui/ask_auger.py` — Ask Auger Panel
+### 5. `ui/ask_genny.py` — Ask Genny Panel
 
-This is the AI agent interface at the bottom of the window. It runs the `auger` CLI tool as a subprocess and streams output into the markdown widget.
+This is the AI agent interface at the bottom of the window. It runs the `genny` CLI tool as a subprocess and streams output into the markdown widget.
 
-- Header bar: dark blue `#007acc`, label `"  🤖  Ask Auger"`, italic status label on right
+- Header bar: dark blue `#007acc`, label `"  🤖  Ask Genny"`, italic status label on right
 - Response area: `MarkdownWidget` in a scrollable frame (takes up most of the panel)
 - Input bar at the BOTTOM (packed `side=BOTTOM` BEFORE the response frame so it stays visible):
   - Multi-line `tk.Text`, height=2, dark themed
   - **Enter** = send, **Shift+Enter** = newline
   - "Ask  " button (blue), "Clear" button below it
-- Locate `auger` binary: `shutil.which("auger") or str(Path.home() / ".local/bin/auger")`
-- Run `auger` as subprocess: `subprocess.Popen([_AUGER, prompt], stdout=PIPE, stderr=STDOUT, text=True, bufsize=1)`
+- Locate `genny` binary: `shutil.which("genny") or str(Path.home() / ".local/bin/genny")`
+- Run `genny` as subprocess: `subprocess.Popen([_GENNY, prompt], stdout=PIPE, stderr=STDOUT, text=True, bufsize=1)`
 - Stream output line-by-line, strip ANSI escape codes with `re.sub(r"\x1b\[[0-9;]*[mK]", "", line)`
 - Use a `queue.Queue` polled every 80ms via `self.after(80, self._poll_queue)` — NEVER update Tkinter widgets from background threads
 - After response is complete, scan for Python code blocks containing `tk.Frame` subclasses. If found, offer a `messagebox.askyesno` to load the widget into the content area
 - Welcome message (on init):
   ```
-  ##  Auger AI Agent
+  ##  Genny AI Agent
 
   I'm your AI SRE assistant. Ask me anything, or build your platform:
 
@@ -211,7 +211,7 @@ click>=8.1.7
 
 ```yaml
 platform:
-  name: Auger SRE Platform
+  name: Genny Platform
   version: "1.0"
 
 environments:
@@ -260,6 +260,6 @@ YELLOW = "#f0c040"   # warning
 ## What to Build First
 
 After creating the full framework, verify it works by:
-1. Running `python3 app.py` — the home tab and Ask Auger panel should appear
+1. Running `python3 app.py` — the home tab and Ask Genny panel should appear
 2. Opening Widgets → API Key Configurator — should show all 5 sections
-3. Typing in Ask Auger: `create a simple hello world widget` — should generate a widget, offer to load it, and it should appear as a new tab that hot-reloads on save
+3. Typing in Ask Genny: `create a simple hello world widget` — should generate a widget, offer to load it, and it should appear as a new tab that hot-reloads on save
