@@ -143,8 +143,8 @@ class GennyRunner:
         if self._agent is None:
             self._agent = build_agent(self._model_name, step_callbacks=[cb], ollama_base=self._ollama_base)
         else:
-            # update callbacks in case model was reset
-            self._agent.step_callbacks = [cb]
+            # Re-register callback using the CallbackRegistry API (smolagents >= 1.14)
+            self._agent._setup_step_callbacks([cb])
 
     def reset_model(self, model_name: str):
         self._model_name = model_name
