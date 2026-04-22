@@ -462,15 +462,13 @@ Generated widgets will appear as tabs above. **Shift+Enter** for newline, **Ente
             for key, val in dotenv_values(env_file).items():
                 if val is not None:
                     env.setdefault(key, val)  # don't override vars already in env
-        # Ensure the token is exposed under the name genny CLI recognises
-        for token_key in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN", "GHE_TOKEN"):
+        # Token priority: GITHUB_COPILOT_TOKEN > GITHUB_TOKEN > GH_TOKEN > GHE_TOKEN
+        # GITHUB_COPILOT_TOKEN is the dedicated Copilot PAT; GITHUB_TOKEN is the repo PAT
+        # (which also works for Copilot if it has the 'copilot' scope)
+        for token_key in ("GITHUB_COPILOT_TOKEN", "GITHUB_TOKEN", "GH_TOKEN", "GHE_TOKEN"):
             if token_key in env and env[token_key]:
-                # Propagate under all names genny CLI checks
-                for alias in ("COPILOT_GITHUB_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"):
-                    env.setdefault(alias, env[token_key])
+                env['GH_TOKEN'] = env[token_key]
                 break
-        # Tell cli.py this subprocess was spawned by the panel — so it tags
-        # chat_history entries as 'panel' and the watcher skips them (no duplicate).
         env['GENNY_CHAT_SOURCE'] = 'panel'
         return env
 

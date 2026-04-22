@@ -6,15 +6,18 @@
 #   genny                    Open interactive Copilot session
 #
 # Auth priority:
-#   1. GITHUB_TOKEN from ~/.genny/.env  (user's saved PAT with copilot scope)
-#   2. GH_TOKEN from environment        (JupyterHub OAuth token — may lack copilot scope)
+#   1. GITHUB_COPILOT_TOKEN from ~/.genny/.env  (dedicated Copilot PAT)
+#   2. GITHUB_TOKEN from ~/.genny/.env           (repo PAT — works if it has 'copilot' scope)
+#   3. GH_TOKEN from environment                 (JupyterHub OAuth — may lack copilot scope)
 
-# Load saved PAT if available (preferred — has copilot scope)
 if [ -f "$HOME/.genny/.env" ]; then
-    SAVED_PAT=$(grep '^GITHUB_TOKEN=' "$HOME/.genny/.env" 2>/dev/null \
+    COPILOT_PAT=$(grep '^GITHUB_COPILOT_TOKEN=' "$HOME/.genny/.env" 2>/dev/null \
+        | head -1 | sed 's/^GITHUB_COPILOT_TOKEN=//;s/^"//;s/"$//')
+    REPO_PAT=$(grep '^GITHUB_TOKEN=' "$HOME/.genny/.env" 2>/dev/null \
         | head -1 | sed 's/^GITHUB_TOKEN=//;s/^"//;s/"$//')
-    if [ -n "$SAVED_PAT" ]; then
-        export GH_TOKEN="$SAVED_PAT"
+    TOKEN="${COPILOT_PAT:-$REPO_PAT}"
+    if [ -n "$TOKEN" ]; then
+        export GH_TOKEN="$TOKEN"
     fi
 fi
 
@@ -22,7 +25,6 @@ COPILOT=/usr/local/bin/copilot
 
 if [ ! -x "$COPILOT" ]; then
     echo "Error: Copilot CLI not found at $COPILOT" >&2
-    echo "Please contact your platform administrator." >&2
     exit 1
 fi
 

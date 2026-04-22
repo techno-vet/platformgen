@@ -787,41 +787,57 @@ class APIConfigWidget(tk.Frame):
         
         section = tk.Frame(self.scroll_frame, bg='#1e1e1e')
         section.pack(fill=tk.X, padx=10)
-        
-        self._add_field(section, "GitHub Token:", "GITHUB_TOKEN", is_masked=True)
-        self._add_field(section, "GitHub API URL:", "GITHUB_API_URL", default="https://api.github.com")
-        
-        # Help text
-        help_label = tk.Label(
+
+        # Copilot token (used by genny CLI for AI responses)
+        self._add_field(section, "Copilot Token:", "GITHUB_COPILOT_TOKEN", is_masked=True)
+        copilot_help = tk.Label(
             section,
-            text="Create token at github.com/settings/tokens with 'repo', 'read:org', 'read:user' scopes",
-            font=('Segoe UI', 8, 'italic'),
-            fg='#808080',
-            bg='#1e1e1e',
-            anchor=tk.W
+            text="Classic PAT with 'copilot' scope — used by the genny CLI for AI responses",
+            font=('Segoe UI', 8, 'italic'), fg='#808080', bg='#1e1e1e', anchor=tk.W
         )
-        help_label.pack(fill=tk.X, pady=(2, 5), padx=(140, 0))
+        copilot_help.pack(fill=tk.X, pady=(0, 4), padx=(140, 0))
+
+        # Repo token (used for git, GitHub API, widget access)
+        self._add_field(section, "Repo Token:", "GITHUB_TOKEN", is_masked=True)
+        repo_help = tk.Label(
+            section,
+            text="Classic PAT with 'repo', 'read:org' scopes — used for git push and GitHub widgets",
+            font=('Segoe UI', 8, 'italic'), fg='#808080', bg='#1e1e1e', anchor=tk.W
+        )
+        repo_help.pack(fill=tk.X, pady=(0, 4), padx=(140, 0))
+
+        # Optional: one token for both
+        tip = tk.Label(
+            section,
+            text="Tip: one classic PAT with both 'repo' + 'copilot' scopes can be used for both fields",
+            font=('Segoe UI', 8, 'italic'), fg='#4ec9b0', bg='#1e1e1e', anchor=tk.W
+        )
+        tip.pack(fill=tk.X, pady=(0, 6), padx=(140, 0))
+
+        self._add_field(section, "GitHub API URL:", "GITHUB_API_URL", default="https://api.github.com")
         
         self._add_test_button(section, self._test_github)
         self._add_divider()
     
     def _test_github(self):
-        """Test GitHub connection."""
+        """Test GitHub connection — both repo token and copilot token."""
         token = self.entries['GITHUB_TOKEN'].get().strip()
+        copilot_token = self.entries.get('GITHUB_COPILOT_TOKEN', tk.StringVar()).get().strip() if 'GITHUB_COPILOT_TOKEN' in self.entries else ''
         api_url = self.entries['GITHUB_API_URL'].get().strip()
         
-        if not token:
-            self._log("GitHub: Token required", 'err')
+        if not token and not copilot_token:
+            self._log("GitHub: At least one token required", 'err')
             return
         
+        active_token = token or copilot_token
+
         try:
-            self._log("GitHub: Testing...", 'info')
+            self._log("GitHub: Testing repo token..." if token else "GitHub: Testing copilot token...", 'info')
             
-            # Test with /user endpoint
             resp = requests.get(
                 f"{api_url.rstrip('/')}/user",
                 headers={
-                    'Authorization': f'Bearer {token}',
+                    'Authorization': f'Bearer {active_token}',
                     'Accept': 'application/vnd.github.v3+json'
                 },
                 timeout=10
@@ -831,38 +847,39 @@ class APIConfigWidget(tk.Frame):
                 data = resp.json()
                 username = data.get('login', 'unknown')
                 name = data.get('name', username)
-                self._log(f"GitHub: ✓ Authenticated as {name} (@{username})", 'ok')
-                
-                # Check Copilot access
+                self._log(f"GitHub: [ok] Authenticated as {name} (@{username})", 'ok')
+
+                # Test copilot access with the dedicated copilot token if provided
+                check_token = copilot_token or token
                 try:
                     copilot_resp = requests.get(
                         f"{api_url.rstrip('/')}/copilot_internal/v2/token",
                         headers={
-                            'Authorization': f'Bearer {token}',
+                            'Authorization': f'Bearer {check_token}',
                             'Accept': 'application/vnd.github.v3+json'
                         },
                         timeout=5
                     )
                     if copilot_resp.status_code == 200:
-                        self._log("GitHub: ✓ Copilot access confirmed", 'ok')
+                        self._log("GitHub: [ok] Copilot access confirmed", 'ok')
                     else:
-                        self._log("GitHub: ℹ Copilot access not available (may need subscription)", 'info')
-                except:
-                    pass  # Copilot check is optional
+                        self._log("GitHub: [!] Copilot token lacks 'copilot' scope — add it at github.com/settings/tokens", 'info')
+                except Exception:
+                    pass
                     
             elif resp.status_code == 401:
-                self._log("GitHub: ✗ Invalid or expired token", 'err')
+                self._log("GitHub: [x] Invalid or expired token", 'err')
             elif resp.status_code == 403:
-                self._log("GitHub: ✗ Access forbidden (check token scopes)", 'err')
+                self._log("GitHub: [x] Access forbidden (check token scopes)", 'err')
             else:
-                self._log(f"GitHub: ✗ Unexpected response (HTTP {resp.status_code})", 'err')
+                self._log(f"GitHub: [x] Unexpected response (HTTP {resp.status_code})", 'err')
                 
         except requests.exceptions.ConnectionError:
-            self._log(f"GitHub: ✗ Cannot connect to {api_url}", 'err')
+            self._log(f"GitHub: [x] Cannot connect to {api_url}", 'err')
         except requests.exceptions.Timeout:
-            self._log("GitHub: ✗ Connection timeout", 'err')
+            self._log("GitHub: [x] Connection timeout", 'err')
         except Exception as e:
-            self._log(f"GitHub: ✗ Error: {str(e)[:80]}", 'err')
+            self._log(f"GitHub: [x] Error: {str(e)[:80]}", 'err')
     
     def _add_github_enterprise_section(self):
         """Add GitHub Enterprise section with SSH support."""
