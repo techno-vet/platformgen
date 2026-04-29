@@ -64,10 +64,8 @@ hub:
                   if token:
                       spawner.environment['GHE_TOKEN'] = token
                       spawner.environment['GH_TOKEN'] = token
-              # Redirect straight to noVNC desktop on spawn — path must include
-              # the full proxy route so the WebSocket routes through JupyterHub correctly
-              ws_path = urllib.parse.quote(f"user/{user.name}/proxy/6080/websockify")
-              spawner.default_url = f"/proxy/6080/vnc.html?autoconnect=true&resize=scale&path={ws_path}"
+              # Redirect to Genny web UI on spawn
+              spawner.default_url = "/proxy/8889/"
       c.JupyterHub.authenticator_class = GennyAuthenticator
       c.Authenticator.admin_users = {'techno-vet'}
 
@@ -85,7 +83,7 @@ proxy:
 
 singleuser:
   image:
-    name: ghcr.io/techno-vet/genny-user
+    name: ghcr.io/techno-vet/platformgen-web
     tag: latest
     pullPolicy: Always
   storage:
@@ -93,11 +91,12 @@ singleuser:
     dynamic:
       storageClass: local-path  # k3s default storage class
   startTimeout: 300
-  cmd: "start-genny-user.sh"
+  cmd: "start-genny-web.sh"
   defaultUrl: "/proxy/8889/"
   extraEnv:
     OLLAMA_URL: "http://ollama.genny-shared.svc.cluster.local:11434"
     PLATFORMGEN_VERSION: "0.3.0"
+    GENNY_WEB_PORT: "8889"
 
   profileList:
     - display_name: "🆓 Free"

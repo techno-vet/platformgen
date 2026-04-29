@@ -1,0 +1,24 @@
+name: Build platformgen-web image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'k8s/jupyterhub/values.yaml'
+  workflow_dispatch:
+
+# Triggers a build in the platformgen-web repo when values.yaml changes.
+# The actual image build lives in techno-vet/platformgen-web.
+# This workflow just documents the dependency and can trigger manually.
+
+env:
+  IMAGE: ghcr.io/techno-vet/platformgen-web
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Note image reference
+        run: |
+          echo "JupyterHub values.yaml updated to use: $IMAGE:latest"
+          echo "Ensure ghcr.io/techno-vet/platformgen-web:latest is built from techno-vet/platformgen-web repo"
