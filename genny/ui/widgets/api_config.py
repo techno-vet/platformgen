@@ -190,6 +190,7 @@ class APIConfigWidget(tk.Frame):
         self._add_aws_section()
         self._add_rancher_section()
         self._add_github_section()
+        self._add_github_oauth_section()
         self._add_github_enterprise_section()
         self._add_artifactory_section()
         self._add_confluence_section()
@@ -881,7 +882,144 @@ class APIConfigWidget(tk.Frame):
         except Exception as e:
             self._log(f"GitHub: [x] Error: {str(e)[:80]}", 'err')
     
-    def _add_github_enterprise_section(self):
+    def _add_github_oauth_section(self):
+        """Add GitHub OAuth App section — used by JupyterHub for platform login."""
+        self._add_section_header(
+            "GitHub OAuth App (PlatformGen Login)",
+            "https://github.com/organizations/techno-vet/settings/applications"
+        )
+
+        section = tk.Frame(self.scroll_frame, bg='#1e1e1e')
+        section.pack(fill=tk.X, padx=10)
+
+        intro = tk.Label(
+            section,
+            text="OAuth App credentials for platformgen.ai/hub login (JupyterHub GitHub auth).",
+            font=('Segoe UI', 8, 'italic'), fg='#9cdcfe', bg='#1e1e1e', anchor=tk.W
+        )
+        intro.pack(fill=tk.X, pady=(0, 6))
+
+        self._add_field(section, "Client ID:", "GITHUB_OAUTH_CLIENT_ID")
+        self._add_field(section, "Client Secret:", "GITHUB_OAUTH_CLIENT_SECRET", is_masked=True)
+
+        callback_frame = tk.Frame(section, bg='#1e1e1e')
+        callback_frame.pack(fill=tk.X, pady=(0, 6))
+        tk.Label(
+            callback_frame,
+            text="Callback URL:",
+            font=('Segoe UI', 9), fg='#9cdcfe', bg='#1e1e1e', width=18, anchor=tk.W
+        ).pack(side=tk.LEFT)
+        tk.Label(
+            callback_frame,
+            text="https://platformgen.ai/hub/oauth_callback",
+            font=('Consolas', 8), fg='#4ec9b0', bg='#1e1e1e', anchor=tk.W
+        ).pack(side=tk.LEFT)
+
+        # Deploy button — patches K8s and reruns helm upgrade
+        btn_row = tk.Frame(section, bg='#1e1e1e')
+        btn_row.pack(fill=tk.X, pady=(4, 0))
+        deploy_btn = tk.Button(
+            btn_row,
+            text="💾 Save & Deploy to JupyterHub",
+            font=('Segoe UI', 9, 'bold'),
+            bg='#0e639c', fg='white', relief=tk.FLAT, padx=12, pady=4,
+            cursor='hand2',
+            command=self._deploy_oauth
+        )
+        deploy_btn.pack(side=tk.LEFT)
+        tk.Label(
+            btn_row,
+            text="  Saves to .env and runs helm upgrade",
+            font=('Segoe UI', 8, 'italic'), fg='#808080', bg='#1e1e1e'
+        ).pack(side=tk.LEFT)
+
+        self._add_divider()
+
+    def _deploy_oauth(self):
+        """Save OAuth credentials and run helm upgrade to wire them into JupyterHub."""
+        import subprocess, threading
+
+        client_id = self.entries.get('GITHUB_OAUTH_CLIENT_ID', tk.StringVar()).get().strip()
+        client_secret = self.entries.get('GITHUB_OAUTH_CLIENT_SECRET', tk.StringVar()).get().strip()
+
+        if not client_id or not client_secret:
+            self._log("OAuth: Client ID and Client Secret are both required", 'err')
+            return
+
+        def _run():
+            self._log("OAuth: Saving credentials...", 'info')
+            # Save to .env
+            env_path = Path(_auger_home()) / '.genny' / '.env'
+            env_path.parent.mkdir(parents=True, exist_ok=True)
+            existing = {}
+            if env_path.exists():
+                for line in env_path.read_text().splitlines():
+                    if '=' in line and not line.startswith('#'):
+                        k, _, v = line.partition('=')
+                        existing[k.strip()] = v.strip()
+            existing['GITHUB_OAUTH_CLIENT_ID'] = client_id
+            existing['GITHUB_OAUTH_CLIENT_SECRET'] = client_secret
+            env_path.write_text('\n'.join(f'{k}={v}' for k, v in existing.items()) + '\n')
+            self._log("OAuth: Saved to ~/.genny/.env", 'ok')
+
+            # Find the platformgen repo
+            platformgen_path = None
+            for candidate in [
+                Path.home() / 'projects' / 'platformgen',
+                Path('/opt/platformgen'),
+                Path('/opt/genny-platform'),
+            ]:
+                if (candidate / 'k8s' / 'jupyterhub' / 'values.yaml').exists():
+                    platformgen_path = candidate
+                    break
+
+            if not platformgen_path:
+                self._log("OAuth: Cannot find platformgen repo — save succeeded but helm upgrade skipped", 'err')
+                return
+
+            deploy_script = platformgen_path / 'k8s' / 'jupyterhub' / 'deploy.sh'
+            if deploy_script.exists():
+                self._log("OAuth: Running helm upgrade via deploy.sh...", 'info')
+                env = {**__import__('os').environ,
+                       'GITHUB_CLIENT_ID': client_id,
+                       'GITHUB_CLIENT_SECRET': client_secret}
+                result = subprocess.run(
+                    ['bash', str(deploy_script)],
+                    env=env, capture_output=True, text=True, timeout=300
+                )
+                if result.returncode == 0:
+                    self._log("OAuth: ✅ JupyterHub deployed — login should work now", 'ok')
+                else:
+                    self._log(f"OAuth: helm upgrade failed:\n{result.stderr[-400:]}", 'err')
+            else:
+                # Fallback: direct helm upgrade with sed substitution
+                self._log("OAuth: Running helm upgrade directly...", 'info')
+                import tempfile, shutil
+                values_src = platformgen_path / 'k8s' / 'jupyterhub' / 'values.yaml'
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as tmp:
+                    content = values_src.read_text()
+                    content = content.replace('REPLACE_GITHUB_CLIENT_ID', client_id)
+                    content = content.replace('REPLACE_GITHUB_CLIENT_SECRET', client_secret)
+                    tmp.write(content)
+                    tmp_path = tmp.name
+                try:
+                    result = subprocess.run(
+                        ['helm', 'upgrade', 'genny-hub', 'jupyterhub/jupyterhub',
+                         '--namespace', 'genny-hub',
+                         '--values', tmp_path,
+                         '--timeout', '5m', '--atomic'],
+                        capture_output=True, text=True, timeout=360
+                    )
+                    if result.returncode == 0:
+                        self._log("OAuth: ✅ JupyterHub deployed — login should work now", 'ok')
+                    else:
+                        self._log(f"OAuth: helm upgrade failed:\n{result.stderr[-400:]}", 'err')
+                finally:
+                    __import__('os').unlink(tmp_path)
+
+        threading.Thread(target=_run, daemon=True).start()
+
+    
         """Add GitHub Enterprise section with SSH support."""
         self._add_section_header("GitHub Enterprise (SSH)", "https://github.helix.gsa.gov/")
         
